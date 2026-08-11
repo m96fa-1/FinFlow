@@ -1,1 +1,29 @@
 @import "tailwindcss";
+
+@theme {
+	--color-bgcolor: #f4f6f8;
+	--color-blue: #2563eb;
+	--color-light-blue: #65c0ff;
+	--color-dark-blue: #0d45d0;
+	--text-md: 1rem;
+}
+
+.form-input { @apply px-3 py-2 text-md border border-[#d1d5db] rounded-md }
+.blue-button { @apply px-6 py-3 bg-blue text-white font-medium rounded-md cursor-pointer }
+.gradient-blue-button { @apply px-6 py-3 bg-linear-45 from-dark-blue to-light-blue text-white shadow-md font-medium rounded-md cursor-pointer }
+.code { @apply px-6 }
+.code {
+	@apply px-2 py-1.5 inline-block border-2 border-transparent rounded-lg;
+	background:
+		linear-gradient(66.77deg, #1c5be4 0%, #92b2f8 100%) padding-box,
+		linear-gradient(155deg, #0e46bf 0%, #3064be 25%, #a3b1ff 50%) border-box;
+}
+.pre {
+	@apply bg-linear-14 from-[#ffffff] to-[#e9f4ff] font-mono font-normal bg-clip-text;
+	-webkit-text-fill-color: transparent;
+	-webkit-background-clip: text;
+}
+
+/* hover animations */
+.button-hover-extend { @apply transition-all duration-300 ease-out hover:px-12 }
+.button-hover-shadow { @apply transition-all duration-300 ease-out hover:shadow-[rgba(0,0,0,0.3)] }
