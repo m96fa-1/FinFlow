@@ -131,7 +131,7 @@ router.post('/login', async (req: Request, res: Response) => {
 // ==========================================
 // GET Current User: /api/auth/user
 // ==========================================
-router.get('/api/auth/user', authenticateToken, async (req: AuthenticatedRequest, res) => {
+router.get('/user', authenticateToken, async (req: AuthenticatedRequest, res) => {
 	try {
 		if (!req.userId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });

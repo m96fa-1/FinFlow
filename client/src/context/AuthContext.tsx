@@ -16,10 +16,9 @@ const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 	const [user, setUser] = React.useState<User | null>(null);
-	const [token, setToken] = React.useState(localStorage.getItem('token'));
-	const [isLoading, setIsLoading] = React.useState(true);
+	const [token, setToken] = React.useState<string | null>(localStorage.getItem('token'));
+	const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
-	// Verify token & restore session
 	React.useEffect(() => {
 		const initAuth = async () => {
 			const storedToken = localStorage.getItem('token');

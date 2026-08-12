@@ -1,6 +1,7 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
 import PageNotFound from './layouts/PageNotFound'
+import RootPage from './pages/RootPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
@@ -12,6 +13,7 @@ export default function App() {
 		<BrowserRouter>
 			<Routes>
 				{/* Public Routes */}
+				<Route path="/" element={<RootPage />} />
 				<Route path="/login" element={<LoginPage />} />
 				<Route path="/register" element={<RegisterPage />} />
 
@@ -22,8 +24,7 @@ export default function App() {
 					<Route path="/budgets" element={<BudgetsPage />} />
 				</Route>
 
-				{/* Default Redirect */}
-				<Route path="/" element={<Navigate to="/dashboard" replace />} />
+				{/* Page Not Found */}
 				<Route path="*" element={<PageNotFound />} />
 			</Routes>
 		</BrowserRouter>

@@ -1,4 +1,3 @@
-import React from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
@@ -7,24 +6,11 @@ export default function ProtectedRoute() {
 
 	if (isLoading) {
 		return (
-			<div style={styles.centerContainer}>
-				<p style={styles.loadingText}>Loading session...</p>
+			<div className='min-h-screen flex items-center justify-center'>
+				<p className='text-[#666]'>Loading session...</p>
 			</div>
 		);
 	}
 
 	return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
-};
-
-const styles: Record<string, React.CSSProperties> = {
-	centerContainer: {
-		display: 'flex',
-		justifyContent: 'center',
-		alignItems: 'center',
-		minHeight: '100vh',
-	},
-	loadingText: {
-		fontSize: '1rem',
-		color: '#666',
-	},
 };
