@@ -17,7 +17,7 @@ export default function RootPage() {
 		<>
 			<Header />
 			<main className='bg-bgcolor'>
-				<a href="/register">Create a new account</a>
+				<a href='/register'>Create a new account</a>
 				<a href='/login'>Login</a>
 			</main>
 		</>

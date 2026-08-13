@@ -7,17 +7,27 @@ html, body {
 	font-style: normal;
 }
 
+a, button {
+	cursor: pointer;
+}
+
 @theme {
 	--font-dm-sans: 'DM Sans', sans-serif;
 	--font-prata-serif: 'Prata', serif;
 	
 	--color-bgcolor: #f4f6f8;
+	--color-light-gray-border: #d1d5db;
+
 	--color-bluish-cyan: #2b8dae;
 	--color-greenish-cyan: #01e19a;
 	--color-navy-blue: #2857a6;
+
+	--color-lighter-gray-text: #8995a9;
+	--color-light-gray-text: #6b7b94;
 	--color-gray-text: #566376;
+	--color-dark-gray-text: #495465;
 	--color-darker-gray-text: #374151;
-	--color-darkest-text: #1e293b;
+	--color-darkest-gray-text: #1e293b;
 	
 	--text-md: 1rem;
 }
@@ -26,8 +36,8 @@ html, body {
 	-webkit-user-drag: none;
 }
 
-.form-input { @apply px-3 py-2 text-md border border-[#d1d5db] rounded-md }
-.gradient-button { @apply bg-linear-45 from-navy-blue to-greenish-cyan text-white shadow-md font-medium rounded-md cursor-pointer }
+.form-input { @apply px-3 py-2 text-md border border-light-gray-border rounded-md }
+.gradient-button { @apply bg-linear-45 from-navy-blue to-greenish-cyan text-white shadow-md font-medium rounded-md }
 .code { @apply inline-block bg-[#e2e4e5] border-l-3 border-bluish-cyan rounded-md }
 .pre { @apply text-[#4b5668] font-mono font-normal }
 

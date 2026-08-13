@@ -11,7 +11,7 @@ export default function PageNotFound() {
 		<div className='min-h-screen p-4 flex items-center justify-center bg-bgcolor'>
 			<div className='max-w-120 text-center'>
 				<h1 className='text-bluish-cyan text-8xl font-sans font-black'>404</h1>
-				<h2 className='mt-3 mb-2 text-darkest-text text-3xl font-bold'>Page Not Found</h2>
+				<h2 className='mt-3 mb-2 text-darkest-gray-text text-3xl font-bold'>Page Not Found</h2>
 				<code className='mt-3 mb-2 px-2 py-1.5 code'><pre className='pre'>{location.pathname}</pre></code>
 				<p className='mt-2 mb-8 text-gray-text'>
 					Oops! The page you are looking for doesn't exist or has been moved.

@@ -13,19 +13,19 @@ export default function App() {
 		<BrowserRouter>
 			<Routes>
 				{/* Public Routes */}
-				<Route path="/" element={<RootPage />} />
-				<Route path="/login" element={<LoginPage />} />
-				<Route path="/register" element={<RegisterPage />} />
+				<Route path='/' element={<RootPage />} />
+				<Route path='/login' element={<LoginPage />} />
+				<Route path='/register' element={<RegisterPage />} />
 
 				{/* Protected Routes (Requires JWT Authentication) */}
 				<Route element={<ProtectedRoute />}>
-					<Route path="/dashboard" element={<DashboardPage />} />
-					<Route path="/transactions" element={<TransactionsPage />} />
-					<Route path="/budgets" element={<BudgetsPage />} />
+					<Route path='/dashboard' element={<DashboardPage />} />
+					<Route path='/transactions' element={<TransactionsPage />} />
+					<Route path='/budgets' element={<BudgetsPage />} />
 				</Route>
 
 				{/* Page Not Found */}
-				<Route path="*" element={<PageNotFound />} />
+				<Route path='*' element={<PageNotFound />} />
 			</Routes>
 		</BrowserRouter>
 	);
