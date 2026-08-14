@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { transactionsApi } from '../api/transactions';
-import type { Transaction } from '../types/api';
+import { useState, useEffect } from 'react'
+import { transactionsApi } from '../api/transactions'
+import type { Transaction } from '../types/api'
 
 export function TransactionsList() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
