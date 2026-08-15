@@ -9,6 +9,17 @@ export default function RootPage() {
 	const langDropdownRef = React.useRef<HTMLUListElement>(null);
 	const [langDropdownOpen, setLangDropdownOpen] = React.useState<boolean>(false);
 
+	// Overflow applied only to the root page
+	React.useEffect(() => {
+		document.querySelector('html')!.style.overflowY = 'auto';
+		document.querySelector('body')!.style.overflowY = 'auto';
+
+		return () => {
+			document.querySelector('html')!.style.overflowY = 'hidden';
+			document.querySelector('body')!.style.overflowY = 'hidden';
+		}
+	}, []);
+
 	React.useEffect(() => {
 		const handleDropdownClick = (ev: PointerEvent) => {
 			if (
