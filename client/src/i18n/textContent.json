@@ -1,0 +1,42 @@
+{
+	"en": {
+		"name": "English",
+		"rootPage": {
+			"header": {
+				"loginPageLink": "Sign In",
+				"registerPageLink": "Get Started",
+				"supportPageLink": "Support"
+			}
+		}
+	},
+	"tr": {
+		"name": "Türkçe",
+		"rootPage": {
+			"header": {
+				"loginPageLink": "Giriş Yap",
+				"registerPageLink": "Kayıt Ol",
+				"supportPageLink": "Yardım"
+			}
+		}
+	},
+	"es": {
+		"name": "Español",
+		"rootPage": {
+			"header": {
+				"loginPageLink": "Iniciar Sesión",
+				"registerPageLink": "Regístrate",
+				"supportPageLink": "Ayuda"
+			}
+		}
+	},
+	"ar": {
+		"name": "العربية",
+		"rootPage": {
+			"header": {
+				"loginPageLink": "تسجيل دخول",
+				"registerPageLink": "ابدأ الآن",
+				"supportPageLink": "الدعم"
+			}
+		}
+	}
+}

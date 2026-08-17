@@ -1,7 +1,7 @@
 import React from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { validateFullName, validateEmail, validatePassword } from '../utils'
+import { validateFullName, validateEmail, validatePassword } from '../lib/utils'
 import LogoTitle from '../components/LogoTitle'
 import clsx from 'clsx'
 import background from '../assets/register-background.jpg'

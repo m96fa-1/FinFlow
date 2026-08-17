@@ -1,10 +1,13 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import clsx from 'clsx'
+import { type TranslationText, useTranslation } from '../context/TranslationContext'
 import LogoTitle from '../components/LogoTitle'
-import { ArrowRight, ArrowRightLeft, ChartPie, ChevronDown, Globe, HandCoins, LineChart, LinkIcon, LockKeyhole, ShieldCheck, TrendingUp, UsersRound } from 'lucide-react'
+import LanguageSwitcher from '../components/LanguageSwither'
+import { ArrowRight, ArrowRightLeft, ChartPie, HandCoins, LineChart, LinkIcon, LockKeyhole, ShieldCheck, TrendingUp, UsersRound } from 'lucide-react'
 
 export default function RootPage() {
+	const { text } = useTranslation();
+
 	// Overflow applied only to the root page
 	React.useEffect(() => {
 		document.querySelector('html')!.style.overflowY = 'auto';
@@ -18,132 +21,102 @@ export default function RootPage() {
 
 	return (
 		<>
-			<Header className='fixed top-0 left-0 right-0 px-12 h-22 bg-white' />
+			<Header text={text} />
 			<main className='mt-22'>
-				<TopSection style={{ backgroundImage: 'linear-gradient(to right, #e5e5e5 1px, transparent 1px), linear-gradient(to bottom, #e5e5e5 1px, transparent 1px)', backgroundSize: '64px 64px' }} className='mb-30 px-20 bg-[#f8f8f8] rounded-b-[10rem]' />
-				<HowFinFlowWorks className='mb-30 mx-20' />
-				<BankGradeSecurity className='px-20 py-20 flex gap-8 bg-gray-800 text-white' />
+				<TopSection />
+				<HowFinFlowWorks />
+				<BankGradeSecurity />
 			</main>
-			<Footer className='' />
+			<Footer />
 		</>
 	);
 }
 
-const Header = ({ className }: { className?: string; }) => {
-	const langButtonRef = React.useRef<HTMLButtonElement>(null);
-	const langDropdownRef = React.useRef<HTMLUListElement>(null);
-	const [langDropdownOpen, setLangDropdownOpen] = React.useState<boolean>(false);
-
-	React.useEffect(() => {
-		const handleDropdownClick = (ev: PointerEvent) => {
-			if (
-				langDropdownRef.current && langButtonRef.current &&
-				!langButtonRef.current.contains(ev.target as Node) &&
-				!langDropdownRef.current.contains(ev.target as Node)
-			) {
-				setLangDropdownOpen(false);
-			}
-		};
-		const handleDropdownKeyDown = (ev: KeyboardEvent) => {
-			if (ev.key === 'Escape')
-				setLangDropdownOpen(false);
-		};
-
-		document.addEventListener('click', handleDropdownClick);
-		document.addEventListener('keydown', handleDropdownKeyDown);
-
-		return () => {
-			document.removeEventListener('click', handleDropdownClick);
-			document.removeEventListener('keydown', handleDropdownKeyDown);
-		};
-	}, [langButtonRef, langDropdownRef]);
-
+const Header = ({ text }: { text: TranslationText }) => {
 	return (
-		<header className={className}>
+		<header className='fixed top-0 left-0 right-0 px-12 h-22 bg-white'>
 			<nav className='h-full flex items-center justify-between'>
-				<a href='/dashboard' className='flex items-center'>
+				<Link to='/dashboard' className='flex items-center'>
 					<LogoTitle height={56} />
-				</a>
+				</Link>
 				<div className='relative flex items-center gap-8'>
-					<button ref={langButtonRef} onClick={() => setLangDropdownOpen((prev) => !prev)} className='h-fit flex items-center gap-0.5 text-gray-800 font-medium'>
-						<Globe width='1rem' className='mr-1' />
-						<span>Eng</span>
-						<ChevronDown width='1rem' className={clsx('mt-0.5 transition-all', langDropdownOpen && 'rotate-90')} />
-					</button>
-					{langDropdownOpen && <ul ref={langDropdownRef} className='absolute top-10 right-86 min-w-25 p-4 space-y-2 bg-white text-gray-800 border border-gray-200 rounded-md transition-all'>
-						<li role='option'><Link to='/' className='block text-bluish-cyan hover:text-bluish-cyan'>English</Link></li>
-						<li role='option'><Link to='/ar' className='block hover:text-bluish-cyan'>العربية</Link></li>
-						<li role='option'><Link to='/tr' className='block hover:text-bluish-cyan'>Türkçe</Link></li>
-						<li role='option'><Link to='/es' className='block hover:text-bluish-cyan'>Español</Link></li>
-					</ul>}
-					<Link to='/support' className='flex items-center text-gray-800 font-medium transition-colors duration-300 ease-out hover:text-bluish-cyan'>Support</Link>
-					<Link to='/register' className='flex items-center text-gray-800 font-medium hover:text-bluish-cyan'>Get Started</Link>
-					<Link to='/login' className='px-6 py-2.5 bg-bluish-cyan text-white rounded-sm font-medium transition-all duration-300 hover:rounded-4xl'>Sign In</Link>
+					<LanguageSwitcher />
+					<Link to='/support' className='flex items-center text-gray-800 font-medium transition-colors duration-300 ease-out hover:text-bluish-cyan'>
+						{text.rootPage.header.supportPageLink}
+					</Link>
+					<Link to='/register' className='flex items-center text-gray-800 font-medium hover:text-bluish-cyan'>
+						{text.rootPage.header.registerPageLink}
+					</Link>
+					<Link to='/login' className='px-6 py-2.5 bg-bluish-cyan text-white rounded-sm font-medium transition-all duration-300 hover:rounded-4xl'>
+						{text.rootPage.header.loginPageLink}
+					</Link>
 				</div>
 			</nav>
 		</header>
 	);
 };
 
-const TopSection = ({ style, className }: { style?: React.CSSProperties; className?: string; }) => {
+const TopSection = () => {
+	const features = [
+		{
+			title: 'Real-Time Analytics',
+			description: 'Visual trend lines, monthly burn rates, and income vs. expense breakdowns.',
+			icon: <LineChart width='100%' height='100%' color='var(--color-bluish-cyan)' strokeWidth='1.5' />,
+		},
+		{
+			title: 'Smart Budgeting',
+			description: 'Custom spending limits with automated visual progress bars and alert thresholds.',
+			icon: <ChartPie width='100%' height='100%' color='var(--color-bluish-cyan)' strokeWidth='1.5' />,
+		},
+		{
+			title: 'Multi-Account Management',
+			description: 'Unified net worth view across checking, savings, credit cards, and investments.',
+			icon: <UsersRound width='100%' height='100%' color='var(--color-bluish-cyan)' strokeWidth='1.5' />,
+		},
+		{
+			title: 'Transaction Categorization',
+			description: 'Automatic tagging for recurring bills, dining, groceries, and custom tags.',
+			icon: <ArrowRightLeft width='100%' height='100%' color='var(--color-bluish-cyan)' strokeWidth='1.5' />,
+		},
+	];
+
 	return (
-		<div style={style} className={className}>
+		<div style={{ backgroundImage: 'linear-gradient(to right, #e5e5e5 1px, transparent 1px), linear-gradient(to bottom, #e5e5e5 1px, transparent 1px)', backgroundSize: '64px 64px' }} className='mb-30 px-20 bg-[#f8f8f8] rounded-b-[10rem]'>
 			<div className='pt-20 mb-10 flex items-center justify-between'>
 				<div>
 					<h1 className='mb-4 text-6xl text-gray-800 font-prata-serif font-black'>Master Your Cash Flow</h1>
 					<p className='mb-6 text-gray-800'>Track transactions, set budgets, and take total control of your financial future in real time.</p>
 					<div className='w-120 flex gap-2'>
-						<a href='/login' className='flex-1 px-6 py-2.5 bg-bluish-cyan text-white rounded-sm text-center font-medium transition-all duration-300 hover:rounded-4xl'>Sign In</a>
-						<a href='/register' className='flex-1 px-6 py-2.5 text-gray-800 border border-gray-800 rounded-sm text-center font-medium transition-all duration-300 hover:rounded-4xl'>Create a new account</a>
+						<Link to='/login' className='flex-1 px-6 py-2.5 bg-bluish-cyan text-white rounded-sm text-center font-medium transition-all duration-300 hover:rounded-4xl'>Sign In</Link>
+						<Link to='/register' className='flex-1 px-6 py-2.5 text-gray-800 border border-gray-800 rounded-sm text-center font-medium transition-all duration-300 hover:rounded-4xl'>Create a new account</Link>
 					</div>
 				</div>
 				<div className='w-100 h-50 bg-emerald-500 text-white'>Dashboard Showcase</div>
 			</div>
 			<div className='w-full pb-18 flex gap-2'>
-				<div className='flex-1 h-20 p-3 flex items-center gap-2 bg-white border border-gray-200 rounded-xl'>
-					<div className='h-full aspect-square'>
-						<LineChart width='100%' height='100%' color='var(--color-bluish-cyan)' strokeWidth='1.5' />
+				{features.map((el, index) => (
+					<div key={index} className='flex-1 h-20 p-3 flex items-center gap-2 bg-white border border-gray-200 rounded-xl'>
+						<div className='h-full aspect-square'>
+							{el.icon}
+						</div>
+						<div>
+							<h3 className='text-gray-800 text-lg font-semibold'>
+								{el.title}
+							</h3>
+							<p className='text-gray-700 text-xs leading-[1.2]'>
+								{el.description}
+							</p>
+						</div>
 					</div>
-					<div>
-						<h3 className='text-gray-800 text-lg font-semibold'>Real-Time Analytics</h3>
-						<p className='text-gray-700 text-xs leading-[1.2]'>Visual trend lines, monthly burn rates, and income vs. expense breakdowns.</p>
-					</div>
-				</div>
-				<div className='flex-1 h-20 p-3 flex items-center gap-2 bg-white border border-gray-200 rounded-xl'>
-					<div className='h-full aspect-square'>
-						<ChartPie width='100%' height='100%' color='var(--color-bluish-cyan)' strokeWidth='1.5' />
-					</div>
-					<div>
-						<h3 className='text-gray-800 text-lg font-semibold'>Smart Budgeting</h3>
-						<p className='text-gray-700 text-xs leading-[1.2]'>Custom spending limits with automated visual progress bars and alert thresholds.</p>
-					</div>
-				</div>
-				<div className='flex-1 h-20 p-3 flex items-center gap-2 bg-white border border-gray-200 rounded-xl'>
-					<div className='h-full aspect-square'>
-						<UsersRound width='100%' height='100%' color='var(--color-bluish-cyan)' strokeWidth='1.5' />
-					</div>
-					<div>
-						<h3 className='text-gray-800 text-lg font-semibold'>Multi-Account Management</h3>
-						<p className='text-gray-700 text-xs leading-[1.2]'>Unified net worth view across checking, savings, credit cards, and investments.</p>
-					</div>
-				</div>
-				<div className='flex-1 h-20 p-3 flex items-center gap-2 bg-white border border-gray-200 rounded-xl'>
-					<div className='h-full aspect-square'>
-						<ArrowRightLeft width='100%' height='100%' color='var(--color-bluish-cyan)' strokeWidth='1.5' />
-					</div>
-					<div>
-						<h3 className='text-gray-800 text-lg font-semibold'>Transaction Categorization</h3>
-						<p className='text-gray-700 text-xs leading-[1.2]'>Automatic tagging for recurring bills, dining, groceries, and custom tags.</p>
-					</div>
-				</div>
+				))}
 			</div>
 		</div>
 	);
 };
 
-const HowFinFlowWorks = ({ className }: { className?: string; }) => {
+const HowFinFlowWorks = () => {
 	return (
-		<div className={className}>
+		<div className='mb-30 mx-20'>
 			<h2 className='mb-8 text-gray-800 text-4xl text-center font-prata-serif font-bold'>How FinFlow Works</h2>
 			<div className='flex items-center justify-between'>
 				<div className='flex items-center gap-2'>
@@ -174,9 +147,9 @@ const HowFinFlowWorks = ({ className }: { className?: string; }) => {
 	);
 };
 
-const BankGradeSecurity = ({ className }: { className?: string; }) => {
+const BankGradeSecurity = () => {
 	return (
-		<div className={className}>
+		<div className='mb-20 px-20 py-20 flex gap-8 bg-gray-800 text-white'>
 			<div className='flex-1'>
 				<h2 className='mb-4 text-white text-5xl font-bold'>Bank-Grade Security</h2>
 				<p className='mb-10 text-gray-300 text-lg'>Lorem ipsum dolor sit amet consectetur adipisicing elit. Animi id dolore maiores neque, nisi doloremque.</p>
@@ -207,10 +180,75 @@ const BankGradeSecurity = ({ className }: { className?: string; }) => {
 	);
 };
 
-const Footer = ({ className }: { className?: string; }) => {
+const Footer = () => {
+	const footerLinks = [
+		{
+			title: 'About',
+			items: [
+				{ name: 'Careers', link: '', },
+				{ name: 'Careers', link: '/careers', },
+				{ name: 'Investor Relations', link: '/investors', },
+				{ name: 'Legal', link: '/legal', },
+				{ name: 'Privacy Policy', link: '/privacy-policy', },
+				{ name: 'Security Information', link: '/security-information', },
+				{ name: 'Trust Center', link: '/trust-center', },
+				{ name: 'Follow Us', link: '/follow-us', },
+			],
+		},
+		{
+			title: 'Support',
+			items: [
+				{ name: 'Contact Us', link: '/contact' },
+				{ name: 'Support Portal', link: '/support' },
+				{ name: 'Dashboard Status', link: '/status' },
+				{ name: 'Product Updates', link: '/product-updates' },
+				{ name: 'Manage Cookies', link: '/cookies' },
+			],
+		},
+		{
+			title: 'Subscriptions',
+			items: [
+				{ name: 'FinFlow Dashboard', link: '/register' },
+				{ name: 'Enterprise Advanced', link: '/subscriptions/enterprise' },
+				{ name: 'Community Edition', link: '/subscriptions/community' },
+			],
+		},
+		{
+			title: 'Data Basics',
+			items: [
+				{ name: 'Vector Databases', link: '/register' },
+				{ name: 'NoSQL Databases', link: '/nosql-databases' },
+				{ name: 'Document Databases', link: '/document-databases' },
+				{ name: 'RAG Database', link: '/rag-database' },
+				{ name: 'ACID Transactions', link: '/acid-transactions' },
+				{ name: 'MERN Stack', link: '/mern-stack' },
+				{ name: 'Agent Memory', link: '/agent-memory' },
+				{ name: 'MEAN Stack', link: '/mean-stack' },
+			],
+		},
+	];
+
 	return (
-		<footer className={className}>
-			<Link to='/'></Link>
+		<footer className='py-15 px-20 flex justify-between border-t border-gray-800'>
+			<div className='flex flex-col justify-between'>
+				<div>
+					<Link to='/'>
+						<LogoTitle height={56} />
+					</Link>
+					<LanguageSwitcher className='mt-4' />
+				</div>
+				<div className='text-gray-700 text-sm'>&copy; 2026 FinFlow, Inc.</div>
+			</div>
+			{footerLinks.map((el, i) => (
+				<div key={i} className='flex flex-col gap-4'>
+					<h4 className='text-lg font-medium'>{el.title}</h4>
+					{el.items.map((it, j) => (
+						<Link key={j} to={it.link} className='hover:underline hover:text-bluish-cyan'>
+							{it.name}
+						</Link>
+					))}
+				</div>
+			))}
 		</footer>
 	);
 };
