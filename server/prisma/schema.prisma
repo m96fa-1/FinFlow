@@ -6,41 +6,70 @@ datasource db {
 	provider = "postgresql"
 }
 
-model User {
-	id						String				@id @default(uuid())
-	fullName			String
-	email					String				@unique
-	passwordHash	String
-	createdAt			DateTime			@default(now())
+enum TransactionType {
+	INCOME
+	EXPENSE
+}
 
+enum BudgetPeriod {
+	MONTHLY
+	YEARLY
+}
+
+model User {
+	id						String						@id @default(uuid())
+	fullName			String
+	email					String						@unique
+	passwordHash	String
+	createdAt			DateTime					@default(now())
+
+	categories		Category[]
 	transactions	Transaction[]
 	budgets				Budget[]
 }
 
-model Transaction {
-	id						String				@id @default(uuid())
-	userId				String
-	amount				Float
-	category			String
-	date					DateTime			@default(now())
-	description		String
+model Category {
+	id						String						@id @default(uuid())
+	userId				String?
+	name					String
+	icon					String?
+	color					String?
+	type					TransactionType		@default(EXPENSE)
 
-	user					User					@relation(fields: [userId], references: [id], onDelete: Cascade)
+	user					User?							@relation(fields: [userId], references: [id], onDelete: Cascade)
+
+	transactions	Transaction[]
+	budgets				Budget[]
+
+	@@unique([name, userId])
+}
+
+model Transaction {
+	id						String						@id @default(uuid())
+	userId				String
+	categoryId		String
+	amount				Float
+	type					TransactionType		@default(EXPENSE)
+	date					DateTime					@default(now())
+	description		String?
+	createdAt			DateTime					@default(now())
+
+	user					User							@relation(fields: [userId], references: [id], onDelete: Cascade)
+	category			Category					@relation(fields: [categoryId], references: [id], onDelete: Restrict)
 }
 
 model Budget {
-	id						String				@id @default(uuid())
+	id						String						@id @default(uuid())
 	userId				String
-	category			String
+	categoryId		String
 	limitAmount		Float
-	period				String				@default("monthly")
+	period				BudgetPeriod			@default(MONTHLY)
+	month					Int								// 1 - 12
+	year					Int								// e.g. 2026
+	createdAt			DateTime					@default(now())
 
-	user					User					@relation(fields: [userId], references: [id], onDelete: Cascade)
-}
+	user					User							@relation(fields: [userId], references: [id], onDelete: Cascade)
+	category			Category					@relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
-model Category {
-	id						String				@id @default(uuid())
-	name					String				@unique
-	icon					String?
-	color					String?
+	@@unique([userId, categoryId, month, year])
 }

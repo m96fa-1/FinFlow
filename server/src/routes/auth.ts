@@ -14,15 +14,13 @@ router.post('/register', async (req: Request, res: Response) => {
 	try {
 		const { fullName, email, password } = req.body;
 
-		// 1. Validation
 		if (!fullName || !email || !password) {
 			return res.status(400).json({
 				success: false,
-				message: 'All fields (fullName, email, password) are required',
+				message: 'fullName, email, and password fields are required',
 			});
 		}
 
-		// 2. Check if user already exists
 		const existingUser = await prisma.user.findUnique({
 			where: { email: email.toLowerCase() },
 		});
@@ -34,11 +32,9 @@ router.post('/register', async (req: Request, res: Response) => {
 			});
 		}
 
-		// 3. Hash password
 		const saltRounds = 10;
 		const passwordHash = await bcrypt.hash(password, saltRounds);
 
-		// 4. Create user in Neon PostgreSQL via Prisma
 		const user = await prisma.user.create({
 			data: {
 				fullName,
@@ -47,14 +43,12 @@ router.post('/register', async (req: Request, res: Response) => {
 			},
 		});
 
-		// 5. Generate JWT token
 		const token = jwt.sign(
 			{ userId: user.id, email: user.email },
 			JWT_SECRET,
 			{ expiresIn: '7d' }
 		);
 
-		// 6. Return success response (exclude passwordHash)
 		return res.status(201).json({
 			success: true,
 			message: 'User registered successfully',

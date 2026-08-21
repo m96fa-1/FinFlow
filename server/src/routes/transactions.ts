@@ -10,11 +10,11 @@ router.use(authenticateToken);
 // ==========================================
 // 1. GET /api/transactions
 // Fetch all transactions for the logged-in user
-// Supports optional filters: ?category=Groceries&limit=10
+// Supports optional filters: ?category=Groceries&type=EXPENSE&limit=10
 // ==========================================
 router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 	try {
-		const { category, limit } = req.query;
+		const { category, type, limit } = req.query;
 
 		if (!req.userId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });
@@ -22,10 +22,21 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 
 		const whereCondition: any = {
 			userId: req.userId,
+			type: type || undefined,
 		};
 
 		if (category) {
-			whereCondition.category = String(category);
+			const fetchedCategory = await prisma.category.findFirst({
+				where: {
+					name: String(category),
+					OR: [{ userId: req.userId }, { userId: null }],
+				},
+			});
+			if (!fetchedCategory) {
+				return res.status(404).json({ success: false, message: `Category ${category} was not found` });
+			}
+
+			whereCondition.categoryId = fetchedCategory.id;
 		}
 
 		const transactions = await prisma.transaction.findMany({
@@ -34,6 +45,9 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 				date: 'desc',
 			},
 			take: limit ? parseInt(String(limit), 10) : undefined,
+			include: {
+				category: true,
+			},
 		});
 
 		return res.json({
@@ -64,6 +78,9 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
 				id: String(id),
 				userId: req.userId,
 			},
+			include: {
+				category: true,
+			},
 		});
 
 		if (!transaction) {
@@ -83,26 +100,48 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
 // ==========================================
 router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 	try {
-		const { amount, category, description, date } = req.body;
+		const { categoryId, amount, type, date, description } = req.body;
 
 		if (!req.userId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });
 		}
 
-		if (amount === undefined || !category) {
+		if (!categoryId || amount === undefined) {
 			return res.status(400).json({
 				success: false,
-				message: 'amount and category are required fields',
+				message: 'categoryId and amount are required fields',
+			});
+		}
+
+		const targetCategory = await prisma.category.findFirst({
+			where: {
+				id: String(categoryId),
+				OR: [{ userId: req.userId }, { userId: null }],
+			},
+		});
+
+		if (!targetCategory) {
+			return res.status(400).json({ success: false, message: 'Invalid categoryId provided' });
+		}
+
+		if (type && String(type) !== 'INCOME' && String(type) !== 'EXPENSE') {
+			return res.status(400).json({
+				success: false,
+				message: 'type must be either \'INCOME\' or \'EXPENSE\'',
 			});
 		}
 
 		const newTransaction = await prisma.transaction.create({
 			data: {
 				userId: req.userId,
+				categoryId: String(categoryId),
 				amount: parseFloat(amount),
-				category: String(category),
-				description: description || '',
-				date: date ? new Date(date) : new Date(),
+				type: type || targetCategory.type,
+				date: date ? new Date(date) : undefined,
+				description: description ? String(description) : undefined,
+			},
+			include: {
+				category: true,
 			},
 		});
 
@@ -124,7 +163,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 	try {
 		const { id } = req.params;
-		const { amount, category, description, date } = req.body;
+		const { categoryId, amount, type, date, description } = req.body;
 
 		if (!req.userId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });
@@ -133,6 +172,7 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 		const existingTransaction = await prisma.transaction.findFirst({
 			where: {
 				id: String(id),
+				userId: req.userId,
 			},
 		});
 
@@ -140,17 +180,26 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 			return res.status(404).json({ success: false, message: 'Transaction not found or unauthorized' });
 		}
 
-		if (existingTransaction.userId !== req.userId) {
-			return res.status(401).json({ success: false, message: 'Unauthorized' });
+		if (type && String(type) !== 'INCOME' && String(type) !== 'EXPENSE') {
+			return res.status(400).json({
+				success: false,
+				message: 'type must be either \'INCOME\' or \'EXPENSE\'',
+			});
 		}
 
 		const updatedTransaction = await prisma.transaction.update({
-			where: { id: String(id) },
+			where: {
+				id: String(id),
+			},
 			data: {
+				categoryId: categoryId ? String(categoryId) : undefined,
 				amount: amount !== undefined ? parseFloat(amount) : undefined,
-				category: category || undefined,
-				description: description !== undefined ? description : undefined,
+				type: type || undefined,
 				date: date ? new Date(date) : undefined,
+				description: description ? String(description) : undefined,
+			},
+			include: {
+				category: true,
 			},
 		});
 
@@ -180,15 +229,12 @@ router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
 		const existingTransaction = await prisma.transaction.findFirst({
 			where: {
 				id: String(id),
+				userId: req.userId,
 			},
 		});
 
 		if (!existingTransaction) {
 			return res.status(404).json({ success: false, message: 'Transaction not found or unauthorized' });
-		}
-
-		if (existingTransaction.userId !== req.userId) {
-			return res.status(401).json({ success: false, message: 'Unauthorized' });
 		}
 
 		await prisma.transaction.delete({

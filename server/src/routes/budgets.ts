@@ -16,6 +16,10 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 	try {
 		const { month, year } = req.query;
 
+		if (!req.userId) {
+			return res.status(401).json({ success: false, message: 'Unauthorized' });
+		}
+
 		const targetDate = new Date();
 		const selectedMonth = month ? parseInt(String(month), 10) : targetDate.getMonth() + 1;
 		const selectedYear = year ? parseInt(String(year), 10) : targetDate.getFullYear();
@@ -23,14 +27,17 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 		const startOfMonth = new Date(selectedYear, selectedMonth - 1, 1);
 		const endOfMonth = new Date(selectedYear, selectedMonth, 0, 23, 59, 59, 999);
 
-		// Fetch user budgets
 		const budgets = await prisma.budget.findMany({
 			where: {
 				userId: req.userId,
+				month: selectedMonth,
+				year: selectedYear,
+			},
+			include: {
+				category: true,
 			},
 		});
 
-		// Calculate progress/spent amount for each budget
 		const budgetsWithSpent = await Promise.all(
 			budgets.map(async (budget) => {
 				const result = await prisma.transaction.aggregate({
@@ -44,7 +51,7 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 							gte: startOfMonth,
 							lte: endOfMonth,
 						},
-						category: budget.category,
+						categoryId: budget.categoryId,
 					},
 				});
 
@@ -79,11 +86,18 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
 	try {
 		const { id } = req.params;
 
+		if (!req.userId) {
+			return res.status(401).json({ success: false, message: 'Unauthorized' });
+		}
+
 		const budget = await prisma.budget.findFirst({
 			where: {
 				id: String(id),
 				userId: req.userId,
 			},
+			include: {
+				category: true,
+			}
 		});
 
 		if (!budget) {
@@ -103,47 +117,61 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
 // ==========================================
 router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 	try {
-		const { category, limitAmount, period } = req.body;
+		const { categoryId, limitAmount, period, month, year } = req.body;
 
-		if (!category || limitAmount === undefined) {
+		if (!req.userId) {
+			return res.status(401).json({ success: false, message: 'Unauthorized' });
+		}
+
+		if (!categoryId || limitAmount === undefined || month === undefined || year === undefined) {
 			return res.status(400).json({
 				success: false,
-				message: 'category and limitAmount are required fields',
+				message: 'categoryId, limitAmount, month, and year are required fields',
 			});
 		}
 
-		// Check if user already has a budget set for this category name
-		const existingBudget = await prisma.budget.findFirst({
+		const existingCategory = await prisma.category.findFirst({
 			where: {
-				userId: req.userId,
-				category,
+				id: String(categoryId),
+				OR: [{ userId: req.userId }, { userId: null }],
 			},
 		});
 
-		let budget;
-
-		if (existingBudget) {
-			// Update existing budget
-			budget = await prisma.budget.update({
-				where: { id: existingBudget.id },
-				data: {
-					limitAmount: parseFloat(limitAmount),
-					period: period || existingBudget.period,
-				},
-			});
-		} else {
-			// Create a new budget
-			budget = await prisma.budget.create({
-				data: {
-					category,
-					limitAmount: parseFloat(limitAmount),
-					period: period || 'monthly',
-					userId: req.userId!,
-				},
-			});
+		if (!existingCategory) {
+			return res.status(400).json({ success: false, message: 'Invalid categoryId provided' });
 		}
 
-		return res.status(201).json({
+		const parsedMonth = parseInt(String(month), 10);
+		const parsedYear = parseInt(String(year), 10);
+		const parsedLimit = parseFloat(String(limitAmount));
+
+		const budget = await prisma.budget.upsert({
+			where: {
+				userId_categoryId_month_year: {
+					userId: req.userId,
+					categoryId: String(categoryId),
+					month: parsedMonth,
+					year: parsedYear,
+				},
+			},
+			update: {
+				limitAmount: parsedLimit,
+				period: period || undefined,
+			},
+			create: {
+				userId: req.userId,
+				categoryId: String(categoryId),
+				limitAmount: parsedLimit,
+				period: period || 'MONTHLY',
+				month: parsedMonth,
+				year: parsedYear,
+			},
+			include: {
+				category: true,
+			},
+		});
+
+		return res.status(200).json({
 			success: true,
 			message: 'Budget saved successfully',
 			data: budget,
@@ -161,10 +189,17 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 	try {
 		const { id } = req.params;
-		const { category, limitAmount, period } = req.body;
+		const { limitAmount, period } = req.body;
+
+		if (!req.userId) {
+			return res.status(401).json({ success: false, message: 'Unauthorized' });
+		}
 
 		const existingBudget = await prisma.budget.findFirst({
-			where: { id: String(id), userId: req.userId },
+			where: {
+				id: String(id),
+				userId: req.userId
+			},
 		});
 
 		if (!existingBudget) {
@@ -172,11 +207,15 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 		}
 
 		const updatedBudget = await prisma.budget.update({
-			where: { id: String(id) },
+			where: {
+				id: String(id)
+			},
 			data: {
-				category: category || undefined,
-				limitAmount: limitAmount !== undefined ? parseFloat(limitAmount) : undefined,
+				limitAmount: limitAmount !== undefined ? parseFloat(String(limitAmount)) : undefined,
 				period: period || undefined,
+			},
+			include: {
+				category: true,
 			},
 		});
 
@@ -198,6 +237,10 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
 	try {
 		const { id } = req.params;
+
+		if (!req.userId) {
+			return res.status(401).json({ success: false, message: 'Unauthorized' });
+		}
 
 		const existingBudget = await prisma.budget.findFirst({
 			where: { id: String(id), userId: req.userId },

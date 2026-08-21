@@ -31,7 +31,6 @@ export default function DashboardPage() {
 				<CategoryBreakdown className='lg:col-span-1 p-6 bg-white rounded-xl border border-gray-100 shadow-sm' />
 			</div>
 
-			{/* Recent Transactions + Top Budgets */}
 			<div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
 				<RecentTransactions className='lg:col-span-2 p-6 bg-white border border-gray-100 rounded-xl shadow-sm' />
 				<TopBudgets className='lg:col-span-1 p-6 flex flex-col bg-white border border-gray-100 rounded-xl shadow-sm' />
