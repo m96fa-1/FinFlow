@@ -1,5 +1,6 @@
 import { Router, Response } from 'express'
 import { prisma } from '../lib/prisma'
+import { $Enums } from '@prisma/client'
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth'
 
 const router = Router();
@@ -22,14 +23,14 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 
 		const whereCondition: any = {
 			userId: req.userId,
-			type: type || undefined,
+			type: type ? type as $Enums.TransactionType : undefined,
 		};
 
 		if (category) {
 			const fetchedCategory = await prisma.category.findFirst({
 				where: {
 					name: String(category),
-					OR: [{ userId: req.userId }, { userId: null }],
+					userId: req.userId,
 				},
 			});
 			if (!fetchedCategory) {
@@ -116,7 +117,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 		const targetCategory = await prisma.category.findFirst({
 			where: {
 				id: String(categoryId),
-				OR: [{ userId: req.userId }, { userId: null }],
+				userId: req.userId,
 			},
 		});
 
@@ -136,7 +137,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 				userId: req.userId,
 				categoryId: String(categoryId),
 				amount: parseFloat(amount),
-				type: type || targetCategory.type,
+				type: type ? type as $Enums.TransactionType : targetCategory.type,
 				date: date ? new Date(date) : undefined,
 				description: description ? String(description) : undefined,
 			},
@@ -168,6 +169,19 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 		if (!req.userId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });
 		}
+		
+		if (categoryId) {
+			const targetCategory = await prisma.category.findFirst({
+				where: {
+					id: String(categoryId),
+					userId: req.userId,
+				},
+			});
+
+			if (!targetCategory) {
+				return res.status(400).json({ success: false, message: 'Invalid categoryId' });
+			}
+		}
 
 		const existingTransaction = await prisma.transaction.findFirst({
 			where: {
@@ -194,7 +208,7 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 			data: {
 				categoryId: categoryId ? String(categoryId) : undefined,
 				amount: amount !== undefined ? parseFloat(amount) : undefined,
-				type: type || undefined,
+				type: type ? type as $Enums.TransactionType : undefined,
 				date: date ? new Date(date) : undefined,
 				description: description ? String(description) : undefined,
 			},

@@ -1,6 +1,7 @@
 import { Router, Response } from 'express'
 import { prisma } from '../lib/prisma'
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth'
+import { $Enums } from '@prisma/client';
 
 const router = Router();
 
@@ -38,33 +39,30 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 			},
 		});
 
-		const budgetsWithSpent = await Promise.all(
-			budgets.map(async (budget) => {
-				const result = await prisma.transaction.aggregate({
-					_sum: {
-						amount: true,
-					},
-					where: {
-						userId: req.userId,
-						type: 'EXPENSE',
-						date: {
-							gte: startOfMonth,
-							lte: endOfMonth,
-						},
-						categoryId: budget.categoryId,
-					},
-				});
+		const expenseAggregates = await prisma.transaction.groupBy({
+			by: ['categoryId'],
+			_sum: { amount: true },
+			where: {
+				userId: req.userId,
+				type: 'EXPENSE',
+				date: { gte: startOfMonth, lte: endOfMonth },
+				categoryId: { in: budgets.map(b => b.categoryId) },
+			},
+		});
 
-				const spentAmount = result._sum?.amount ?? 0;
-
-				return {
-					...budget,
-					spentAmount,
-					remainingAmount: budget.limitAmount - spentAmount,
-					isOverBudget: spentAmount > budget.limitAmount,
-				};
-			})
+		const spentMap = new Map(
+			expenseAggregates.map(item => [item.categoryId, item._sum.amount ?? 0])
 		);
+
+		const budgetsWithSpent = budgets.map((budget) => {
+			const spentAmount = spentMap.get(budget.categoryId) ?? 0;
+			return {
+				...budget,
+				spentAmount,
+				remainingAmount: budget.limitAmount - spentAmount,
+				isOverBudget: spentAmount > budget.limitAmount,
+			};
+		});
 
 		return res.json({
 			success: true,
@@ -133,7 +131,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 		const existingCategory = await prisma.category.findFirst({
 			where: {
 				id: String(categoryId),
-				OR: [{ userId: req.userId }, { userId: null }],
+				userId: req.userId,
 			},
 		});
 
@@ -156,13 +154,13 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 			},
 			update: {
 				limitAmount: parsedLimit,
-				period: period || undefined,
+				period: period ? period as $Enums.BudgetPeriod : undefined,
 			},
 			create: {
 				userId: req.userId,
 				categoryId: String(categoryId),
 				limitAmount: parsedLimit,
-				period: period || 'MONTHLY',
+				period: period ? period as $Enums.BudgetPeriod : 'MONTHLY',
 				month: parsedMonth,
 				year: parsedYear,
 			},
@@ -208,11 +206,11 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 
 		const updatedBudget = await prisma.budget.update({
 			where: {
-				id: String(id)
+				id: String(id),
 			},
 			data: {
 				limitAmount: limitAmount !== undefined ? parseFloat(String(limitAmount)) : undefined,
-				period: period || undefined,
+				period: period ? period as $Enums.BudgetPeriod : undefined,
 			},
 			include: {
 				category: true,

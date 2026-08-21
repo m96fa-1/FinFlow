@@ -6,22 +6,16 @@ export interface User {
 	fullName:						string;
 	email:							string;
 	createdAt:					string;
-	
-	categories:					Category[];
-	transactions:				Transaction[];
-	budgets:						Budget[];
 }
 
 export interface Category {
 	id:									string;
-	userId?:						string;
+	userId:							string | null;
 	name:								string;
-	icon?:							string;
-	color?:							string;
+	icon:								string | null;
+	color:							string | null;
 	type:								TransactionType;
-
-	transactions:				Transaction[];
-	budgets:						Budget[];
+	_count:							{ transactions: number; budgets: number; };
 }
 
 export interface Transaction {
@@ -31,7 +25,7 @@ export interface Transaction {
 	amount:							number;
 	type:								TransactionType;
 	date:								string;
-	description?:				string;
+	description:				string | null;
 	createdAt:					string;
 
 	category:						Category;

@@ -21,8 +21,10 @@ router.post('/register', async (req: Request, res: Response) => {
 			});
 		}
 
+		const normalizedEmail = String(email).toLowerCase().trim();
+
 		const existingUser = await prisma.user.findUnique({
-			where: { email: email.toLowerCase() },
+			where: { email: normalizedEmail },
 		});
 
 		if (existingUser) {
@@ -35,18 +37,38 @@ router.post('/register', async (req: Request, res: Response) => {
 		const saltRounds = 10;
 		const passwordHash = await bcrypt.hash(password, saltRounds);
 
-		const user = await prisma.user.create({
-			data: {
-				fullName,
-				email: email.toLowerCase(),
-				passwordHash,
-			},
+		const user = await prisma.$transaction(async (tx) => {
+			const newUser = await tx.user.create({
+				data: {
+					fullName: String(fullName).trim(),
+					email: normalizedEmail,
+					passwordHash,
+				},
+			});
+
+			const defaultCategories = await tx.category.findMany({
+				where: { userId: null },
+			});
+
+			if (defaultCategories.length > 0) {
+				await tx.category.createMany({
+					data: defaultCategories.map((template) => ({
+						userId: newUser.id,
+						name: template.name,
+						icon: template.icon,
+						color: template.color,
+						type: template.type,
+					})),
+				});
+			}
+
+			return newUser;
 		});
 
 		const token = jwt.sign(
 			{ userId: user.id, email: user.email },
 			JWT_SECRET,
-			{ expiresIn: '7d' }
+			{ expiresIn: '7d' },
 		);
 
 		return res.status(201).json({
@@ -61,7 +83,7 @@ router.post('/register', async (req: Request, res: Response) => {
 			},
 		});
 	} catch (error) {
-		console.error('Register error:', error);
+		console.error('Register error: ', error);
 		return res.status(500).json({ success: false, message: 'Server error during registration' });
 	}
 });
@@ -80,8 +102,10 @@ router.post('/login', async (req: Request, res: Response) => {
 			});
 		}
 
+		const normalizedEmail = String(email).toLowerCase().trim();
+
 		const user = await prisma.user.findUnique({
-			where: { email: email.toLowerCase() },
+			where: { email: normalizedEmail },
 		});
 
 		if (!user) {
@@ -91,7 +115,7 @@ router.post('/login', async (req: Request, res: Response) => {
 			});
 		}
 
-		const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+		const isPasswordValid = await bcrypt.compare(String(password), user.passwordHash);
 		if (!isPasswordValid) {
 			return res.status(401).json({
 				success: false,
@@ -102,7 +126,7 @@ router.post('/login', async (req: Request, res: Response) => {
 		const token = jwt.sign(
 			{ userId: user.id, email: user.email },
 			JWT_SECRET,
-			{ expiresIn: '7d' }
+			{ expiresIn: '7d' },
 		);
 
 		return res.json({
@@ -117,7 +141,7 @@ router.post('/login', async (req: Request, res: Response) => {
 			},
 		});
 	} catch (error) {
-		console.error('Login error:', error);
+		console.error('Login error: ', error);
 		return res.status(500).json({ success: false, message: 'Server error during login' });
 	}
 });
@@ -137,7 +161,7 @@ router.get('/user', authenticateToken, async (req: AuthenticatedRequest, res) =>
 				id: true,
 				fullName: true,
 				email: true,
-				createdAt: true
+				createdAt: true,
 			},
 		});
 
@@ -145,10 +169,10 @@ router.get('/user', authenticateToken, async (req: AuthenticatedRequest, res) =>
 			return res.status(404).json({ success: false, message: 'User not found' });
 		}
 
-		res.json({ success: true, user });
+		return res.json({ success: true, user });
 	} catch (error) {
 		console.error('User fetch error:', error);
-		res.status(500).json({ success: false, message: 'Server error while fetching user' });
+		return res.status(500).json({ success: false, message: 'Server error while fetching user' });
 	}
 });
 

@@ -24,7 +24,7 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 
 		const categories = await prisma.category.findMany({
 			where: {
-				OR: [{ userId: req.userId }, { userId: null }],
+				userId: req.userId,
 				...(parsedType ? { type: parsedType } : {})
 			},
 			take: limit ? parseInt(String(limit), 10) : undefined,
@@ -68,7 +68,7 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
 		const category = await prisma.category.findFirst({
 			where: {
 				id: String(id),
-				OR: [{ userId: req.userId }, { userId: null }],
+				userId: req.userId,
 			},
 			select: {
 				id: true,
@@ -128,6 +128,17 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 				color: color ? String(color) : undefined,
 				type: type ? (type as 'INCOME' | 'EXPENSE') : 'EXPENSE',
 			},
+			select: {
+				id: true,
+				userId: true,
+				name: true,
+				icon: true,
+				color: true,
+				type: true,
+				_count: {
+					select: { transactions: true, budgets: true },
+				},
+			},
 		});
 
 		return res.status(201).json({
@@ -165,10 +176,7 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 		});
 
 		if (!existingCategory) {
-			return res.status(404).json({
-				success: false,
-				message: 'Category not found or unauthorized to edit default categories',
-			});
+			return res.status(404).json({ success: false, message: 'Category not found' });
 		}
 
 		if (type && String(type) !== 'INCOME' && String(type) !== 'EXPENSE') {
@@ -187,6 +195,17 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 				icon: icon ? String(icon) : undefined,
 				color: color ? String(color) : undefined,
 				type: type || undefined,
+			},
+			select: {
+				id: true,
+				userId: true,
+				name: true,
+				icon: true,
+				color: true,
+				type: true,
+				_count: {
+					select: { transactions: true, budgets: true },
+				},
 			},
 		});
 
@@ -224,10 +243,7 @@ router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
 		});
 
 		if (!existingCategory) {
-			return res.status(404).json({
-				success: false,
-				message: 'Category not found or unauthorized to delete default categories',
-			});
+			return res.status(404).json({ success: false, message: 'Category not found' });
 		}
 
 		await prisma.category.delete({
