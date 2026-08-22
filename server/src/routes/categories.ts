@@ -1,5 +1,6 @@
 import { Router, Response } from 'express'
 import { prisma } from '../lib/prisma'
+import { $Enums } from '@prisma/client'
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth'
 
 const router = Router();
@@ -21,13 +22,14 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 		}
 
 		const parsedType = type === 'INCOME' || type === 'EXPENSE' ? type : undefined;
+		const parsedLimit = !Number.isNaN(parseInt(String(limit), 10)) ? parseInt(String(limit), 10) : undefined;
 
 		const categories = await prisma.category.findMany({
 			where: {
 				userId: req.userId,
 				...(parsedType ? { type: parsedType } : {})
 			},
-			take: limit ? parseInt(String(limit), 10) : undefined,
+			take: parsedLimit,
 			select: {
 				id: true,
 				userId: true,
@@ -120,13 +122,18 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 			});
 		}
 
+		const normalizedName = String(name).trim();
+		const parsedIcon = icon ? String(icon) : undefined;
+		const parsedColor = color ? String(color) : undefined;
+		const parsedType = type ? type as $Enums.TransactionType : undefined;
+
 		const newCategory = await prisma.category.create({
 			data: {
 				userId: req.userId,
-				name: String(name).trim(),
-				icon: icon ? String(icon) : undefined,
-				color: color ? String(color) : undefined,
-				type: type ? (type as 'INCOME' | 'EXPENSE') : 'EXPENSE',
+				name: normalizedName,
+				icon: parsedIcon,
+				color: parsedColor,
+				type: parsedType,
 			},
 			select: {
 				id: true,
@@ -186,15 +193,20 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 			});
 		}
 
+		const parsedName = name ? String(name).trim() : undefined;
+		const parsedIcon = icon ? String(icon) : undefined;
+		const parsedColor = color ? String(color) : undefined;
+		const parsedType = type ? type as $Enums.TransactionType : undefined;
+
 		const updatedCategory = await prisma.category.update({
 			where: {
 				id: String(id),
 			},
 			data: {
-				name: name ? String(name).trim() : undefined,
-				icon: icon ? String(icon) : undefined,
-				color: color ? String(color) : undefined,
-				type: type || undefined,
+				name: parsedName,
+				icon: parsedIcon,
+				color: parsedColor,
+				type: parsedType,
 			},
 			select: {
 				id: true,

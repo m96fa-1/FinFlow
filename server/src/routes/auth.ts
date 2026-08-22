@@ -21,7 +21,9 @@ router.post('/register', async (req: Request, res: Response) => {
 			});
 		}
 
+		const normalizedFullName = String(fullName).trim();
 		const normalizedEmail = String(email).toLowerCase().trim();
+		const parsedPassword = String(password);
 
 		const existingUser = await prisma.user.findUnique({
 			where: { email: normalizedEmail },
@@ -35,12 +37,12 @@ router.post('/register', async (req: Request, res: Response) => {
 		}
 
 		const saltRounds = 10;
-		const passwordHash = await bcrypt.hash(password, saltRounds);
+		const passwordHash = await bcrypt.hash(parsedPassword, saltRounds);
 
 		const user = await prisma.$transaction(async (tx) => {
 			const newUser = await tx.user.create({
 				data: {
-					fullName: String(fullName).trim(),
+					fullName: normalizedFullName,
 					email: normalizedEmail,
 					passwordHash,
 				},
@@ -103,6 +105,7 @@ router.post('/login', async (req: Request, res: Response) => {
 		}
 
 		const normalizedEmail = String(email).toLowerCase().trim();
+		const parsedPassword = String(password);
 
 		const user = await prisma.user.findUnique({
 			where: { email: normalizedEmail },
@@ -115,7 +118,7 @@ router.post('/login', async (req: Request, res: Response) => {
 			});
 		}
 
-		const isPasswordValid = await bcrypt.compare(String(password), user.passwordHash);
+		const isPasswordValid = await bcrypt.compare(parsedPassword, user.passwordHash);
 		if (!isPasswordValid) {
 			return res.status(401).json({
 				success: false,

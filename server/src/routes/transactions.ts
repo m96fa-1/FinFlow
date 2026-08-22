@@ -21,15 +21,19 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });
 		}
 
+		const parsedCategory = category ? String(category) : undefined;
+		const parsedType = type === 'INCOME' || type === 'EXPENSE' ? type : undefined;
+		const parsedLimit = !Number.isNaN(parseInt(String(limit), 10)) ? parseInt(String(limit), 10) : undefined;
+
 		const whereCondition: any = {
 			userId: req.userId,
-			type: type ? type as $Enums.TransactionType : undefined,
+			type: parsedType,
 		};
 
-		if (category) {
+		if (parsedCategory) {
 			const fetchedCategory = await prisma.category.findFirst({
 				where: {
-					name: String(category),
+					name: parsedCategory,
 					userId: req.userId,
 				},
 			});
@@ -42,13 +46,9 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 
 		const transactions = await prisma.transaction.findMany({
 			where: whereCondition,
-			orderBy: {
-				date: 'desc',
-			},
-			take: limit ? parseInt(String(limit), 10) : undefined,
-			include: {
-				category: true,
-			},
+			take: parsedLimit,
+			include: { category: true },
+			orderBy: { date: 'desc' },
 		});
 
 		return res.json({
@@ -132,14 +132,20 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 			});
 		}
 
+		const parsedCategoryId = String(categoryId);
+		const parsedAmount = parseFloat(amount);
+		const parsedType = type ? type as $Enums.TransactionType : undefined;
+		const parsedDate = date ? new Date(date) : undefined;
+		const parsedDescription = description ? String(description) : undefined;
+
 		const newTransaction = await prisma.transaction.create({
 			data: {
 				userId: req.userId,
-				categoryId: String(categoryId),
-				amount: parseFloat(amount),
-				type: type ? type as $Enums.TransactionType : targetCategory.type,
-				date: date ? new Date(date) : undefined,
-				description: description ? String(description) : undefined,
+				categoryId: parsedCategoryId,
+				amount: parsedAmount,
+				type: parsedType,
+				date: parsedDate,
+				description: parsedDescription,
 			},
 			include: {
 				category: true,
@@ -201,16 +207,22 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 			});
 		}
 
+		const parsedCategoryId = categoryId ? String(categoryId) : undefined;
+		const parsedAmount = amount !== undefined ? parseFloat(String(amount)) : undefined;
+		const parsedType = type ? type as $Enums.TransactionType : undefined;
+		const parsedDate = date ? new Date(date) : undefined;
+		const parsedDescription = description ? String(description) : undefined;
+
 		const updatedTransaction = await prisma.transaction.update({
 			where: {
 				id: String(id),
 			},
 			data: {
-				categoryId: categoryId ? String(categoryId) : undefined,
-				amount: amount !== undefined ? parseFloat(amount) : undefined,
-				type: type ? type as $Enums.TransactionType : undefined,
-				date: date ? new Date(date) : undefined,
-				description: description ? String(description) : undefined,
+				categoryId: parsedCategoryId,
+				amount: parsedAmount,
+				type: parsedType,
+				date: parsedDate,
+				description: parsedDescription,
 			},
 			include: {
 				category: true,

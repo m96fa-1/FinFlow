@@ -1,7 +1,7 @@
 import { Router, Response } from 'express'
 import { prisma } from '../lib/prisma'
+import { $Enums } from '@prisma/client'
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth'
-import { $Enums } from '@prisma/client';
 
 const router = Router();
 
@@ -139,28 +139,25 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 			return res.status(400).json({ success: false, message: 'Invalid categoryId provided' });
 		}
 
+		if (period && String(period) !== 'MONTHLY' && String(period) !== 'YEARLY') {
+			return res.status(400).json({
+				success: false,
+				message: 'period must be either \'MONTHLY\' or \'YEARLY\'',
+			});
+		}
+
+		const parsedCategoryId = String(categoryId);
+		const parsedLimit = parseFloat(String(limitAmount));
+		const parsedPeriod = period ? period as $Enums.BudgetPeriod : undefined;
 		const parsedMonth = parseInt(String(month), 10);
 		const parsedYear = parseInt(String(year), 10);
-		const parsedLimit = parseFloat(String(limitAmount));
 
-		const budget = await prisma.budget.upsert({
-			where: {
-				userId_categoryId_month_year: {
-					userId: req.userId,
-					categoryId: String(categoryId),
-					month: parsedMonth,
-					year: parsedYear,
-				},
-			},
-			update: {
-				limitAmount: parsedLimit,
-				period: period ? period as $Enums.BudgetPeriod : undefined,
-			},
-			create: {
+		const budget = await prisma.budget.create({
+			data: {
 				userId: req.userId,
-				categoryId: String(categoryId),
+				categoryId: parsedCategoryId,
 				limitAmount: parsedLimit,
-				period: period ? period as $Enums.BudgetPeriod : 'MONTHLY',
+				period: parsedPeriod,
 				month: parsedMonth,
 				year: parsedYear,
 			},
@@ -169,9 +166,9 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 			},
 		});
 
-		return res.status(200).json({
+		return res.status(201).json({
 			success: true,
-			message: 'Budget saved successfully',
+			message: 'Budget created successfully',
 			data: budget,
 		});
 	} catch (error) {
@@ -187,10 +184,23 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 	try {
 		const { id } = req.params;
-		const { limitAmount, period } = req.body;
+		const { categoryId, limitAmount, period, month, year } = req.body;
 
 		if (!req.userId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });
+		}
+
+		if (categoryId) {
+			const targetCategory = await prisma.category.findFirst({
+				where: {
+					id: String(categoryId),
+					userId: req.userId,
+				},
+			});
+
+			if (!targetCategory) {
+				return res.status(400).json({ success: false, message: 'Invalid categoryId' });
+			}
 		}
 
 		const existingBudget = await prisma.budget.findFirst({
@@ -204,13 +214,29 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 			return res.status(404).json({ success: false, message: 'Budget not found or unauthorized' });
 		}
 
+		if (period && String(period) !== 'MONTHLY' && String(period) !== 'YEARLY') {
+			return res.status(400).json({
+				success: false,
+				message: 'period must be either \'MONTHLY\' or \'YEARLY\'',
+			});
+		}
+
+		const parsedCategoryId = categoryId ? String(categoryId) : undefined;
+		const parsedLimit = limitAmount !== undefined ? parseFloat(String(limitAmount)) : undefined;
+		const parsedPeriod = period ? period as $Enums.BudgetPeriod : undefined;
+		const parsedMonth = month !== undefined ? parseInt(String(month), 10) : undefined;
+		const parsedYear = year !== undefined ? parseInt(String(year), 10) : undefined;
+
 		const updatedBudget = await prisma.budget.update({
 			where: {
 				id: String(id),
 			},
 			data: {
-				limitAmount: limitAmount !== undefined ? parseFloat(String(limitAmount)) : undefined,
-				period: period ? period as $Enums.BudgetPeriod : undefined,
+				categoryId: parsedCategoryId,
+				limitAmount: parsedLimit,
+				period: parsedPeriod,
+				month: parsedMonth,
+				year: parsedYear,
 			},
 			include: {
 				category: true,

@@ -20,7 +20,7 @@ export const budgetsApi = {
 		return response.data;
 	},
 
-	createOrUpdate: async (data: CreateBudgetInput) => {
+	create: async (data: CreateBudgetInput) => {
 		const response = await apiClient.post<ApiResponse<Budget>>('/budgets', data);
 		return response.data;
 	},
