@@ -10,11 +10,11 @@ const prisma = new PrismaClient({ adapter });
 
 const categories = [
 	{ name: 'Housing & Rent', 	icon: 'house', 							color: '#2B8DAE', 	type: TransactionType.EXPENSE },
-	{ name: 'Food & Groceries', icon: 'shopping-basket', 		color: '#239DAA', 	type: TransactionType.EXPENSE },
-	{ name: 'Transportation', 	icon: 'car', 								color: '#1AAEA6', 	type: TransactionType.EXPENSE },
-	{ name: 'Entertainment', 		icon: 'gamepad-2', 					color: '#12BFA2', 	type: TransactionType.EXPENSE },
-	{ name: 'Income / Salary', 	icon: 'banknote-arrow-up', 	color: '#0AD09E', 	type: TransactionType.INCOME 	},
-	{ name: 'Utilities', 				icon: 'zap', 								color: '#01E19A', 	type: TransactionType.EXPENSE },
+	{ name: 'Food & Groceries', icon: 'shopping-basket', 		color: '#249AAB', 	type: TransactionType.EXPENSE },
+	{ name: 'Transportation', 	icon: 'car', 								color: '#1DA9A7', 	type: TransactionType.EXPENSE },
+	{ name: 'Entertainment', 		icon: 'gamepad-2', 					color: '#16B7A4', 	type: TransactionType.EXPENSE },
+	{ name: 'Income / Salary', 	icon: 'banknote-arrow-up', 	color: '#0FC4A1', 	type: TransactionType.INCOME 	},
+	{ name: 'Utilities', 				icon: 'zap', 								color: '#08D29E', 	type: TransactionType.EXPENSE },
 ];
 
 async function main() {
@@ -30,9 +30,10 @@ async function main() {
 			await prisma.category.update({
 				where: { id: existingCategory.id },
 				data: {
-					type: category.type,
+					name: category.name,
 					icon: category.icon,
 					color: category.color,
+					type: category.type,
 				},
 			});
 		} else {

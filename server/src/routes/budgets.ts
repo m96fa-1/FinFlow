@@ -109,6 +109,8 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
 	}
 });
 
+// TODO: 3. Make the budget only creatable with an EXPENSE type category (think about it)
+// TODO: 4. Make the budget only creatable if there's no other budget with the same category in the same month and year
 // ==========================================
 // 3. POST /api/budgets
 // Create or update a budget limit for a category

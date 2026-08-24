@@ -6,6 +6,7 @@ datasource db {
 	provider = "postgresql"
 }
 
+// TODO: 2. Rename this trash to CategoryType
 enum TransactionType {
 	INCOME
 	EXPENSE
@@ -44,6 +45,7 @@ model Category {
 	@@unique([name, userId])
 }
 
+// TODO: 1. Remove the type from Transaction model since you already have one inside Category and that can create a conflict.
 model Transaction {
 	id						String						@id @default(uuid())
 	userId				String
