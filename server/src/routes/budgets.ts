@@ -21,9 +21,9 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });
 		}
 
-		const targetDate = new Date();
-		const selectedMonth = month ? parseInt(String(month), 10) : targetDate.getMonth() + 1;
-		const selectedYear = year ? parseInt(String(year), 10) : targetDate.getFullYear();
+		const now = new Date();
+		const selectedMonth = month ? parseInt(String(month), 10) : now.getUTCMonth() + 1;
+		const selectedYear = year ? parseInt(String(year), 10) : now.getUTCFullYear();
 
 		const startOfMonth = new Date(selectedYear, selectedMonth - 1, 1);
 		const endOfMonth = new Date(selectedYear, selectedMonth, 0, 23, 59, 59, 999);

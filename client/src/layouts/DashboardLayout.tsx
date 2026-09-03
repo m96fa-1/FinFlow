@@ -2,7 +2,7 @@ import React from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import UserNoImageAvatar from '../components/UserNoImageAvatar'
-import LogoTitle from '../components/LogoTitle'
+import { LogoTitle } from '../components/Logos'
 import { LinkIcon, ArrowRightLeft, ChartLine, ChartPie, LayoutDashboard, Settings } from 'lucide-react'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { useNavigate, Link } from 'react-router-dom'
 import { validateEmail } from '../lib/utils'
 import background from '../assets/login-background.jpg'
-import LogoTitle from '../components/LogoTitle'
+import { LogoTitle } from '../components/Logos'
 
 export default function LoginPage() {
 	const { isAuthenticated, login } = useAuth();

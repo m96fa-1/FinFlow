@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import DashboardLayout from '../layouts/DashboardLayout'
-import { useDashboardData } from '../hooks/useDashboardData'
+import { useDashboardData, type DashboardData } from '../hooks/useDashboardData'
 import type { Transaction, Budget } from '../types/api'
 import { ContextPill } from '../components/ContextPill'
 import { LineChart, PieChart } from '../components/Charts'
@@ -30,14 +30,11 @@ export default function DashboardPage() {
 				<ContextPill />
 			</div>
 
-			<KeyMetricsSummary />
+			<KeyMetricsSummary data={data} />
 
 			<div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
 				<MonthlySpendingChart transactions={data.transactions} />
 				<CategoryBreakdown transactions={data.transactions} />
-			</div>
-
-			<div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
 				<RecentTransactions transactions={data.transactions} />
 				<TopBudgets budgets={data.budgets} />
 			</div>
@@ -45,12 +42,126 @@ export default function DashboardPage() {
 	);
 }
 
-const KeyMetricsSummary = () => {
+const KeyMetricsSummary = ({ data }: { data: DashboardData; }) => {
+	const metricsData = React.useMemo(() => {
+		const now = new Date();
+		const currentYear = now.getUTCFullYear();
+		const currentMonth = now.getUTCMonth();
+
+		const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+		const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+		let totalIncome = 0;
+		let totalExpense = 0;
+		let monthIncome = 0;
+		let monthExpenses = 0;
+		let lastMonthIncome = 0;
+		let lastMonthExpenses = 0;
+
+		data.transactions.forEach(tx => {
+			if (tx.type === 'INCOME') {
+				totalIncome += tx.amount;
+			} else {
+				totalExpense += tx.amount;
+			}
+			
+			const d = new Date(tx.date);
+			const year = d.getUTCFullYear();
+			const month = d.getUTCMonth();
+
+			if (year === currentYear && month === currentMonth) {
+				if (tx.type === 'INCOME') monthIncome += tx.amount;
+				else monthExpenses += tx.amount;
+			} else if (year === lastMonthYear && month === lastMonth) {
+				if (tx.type === 'INCOME') lastMonthIncome += tx.amount;
+				else lastMonthExpenses += tx.amount;
+			}
+		});
+
+		let bSpents = 0;
+		let bLimits = 0;
+
+		data.budgets.forEach(budget => {
+			if (budget.year === currentYear && budget.month - 1 === currentMonth) {
+				bSpents += budget.isOverBudget ? budget.limitAmount : budget.spentAmount!;
+				bLimits += budget.limitAmount;
+			}
+		});
+
+		const balance = (totalIncome - totalExpense).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+		const bPercent = bLimits > 0 ? Math.round(bSpents / bLimits * 100) : 0;
+		const savingsRate = monthIncome > 0 ? Math.round((monthIncome - monthExpenses) / monthIncome * 100) : 0;
+		const lastSavingsRate = lastMonthIncome > 0 ? Math.round((lastMonthIncome - lastMonthExpenses) / lastMonthIncome * 100) : 0;
+
+		return {
+			totalBalance: {
+				amount: balance,
+				changeValue: '',
+				changeStatus: 'positive',
+				noteStatus: 'positive',
+			},
+			monthlySpending: {
+				amount: monthExpenses.toLocaleString('en-US', { style: 'currency', currency: 'USD' }),
+				changeValue: `${monthExpenses > lastMonthExpenses ? '+' : ''}$${Math.round(monthExpenses - lastMonthExpenses)}`,
+				changeStatus: monthExpenses > lastMonthExpenses ? 'negative' : 'positive',
+				noteStatus: monthExpenses > lastMonthExpenses ? 'negative' : 'positive',
+			},
+			budgetUsed: {
+				amount: `${bPercent}%`,
+				changeValue: (bLimits - bSpents).toLocaleString('en-US', { style: 'currency', currency: 'USD' }),
+				changeStatus: 'neutral',
+				noteStatus: bPercent < 80 ? 'positive' : 'negative',
+			},
+			savingsRate: {
+				amount: `${savingsRate}%`,
+				changeValue: `${savingsRate > lastSavingsRate ? '+' : ''}${parseFloat((savingsRate - lastSavingsRate).toFixed(2))}%`,
+				changeStatus: savingsRate > lastSavingsRate ? 'positive' : 'negative',
+				noteStatus: savingsRate >= 25 ? 'positive' : 'negative',
+			},
+		};
+	}, [data]);
+
 	const metrics = [
-		{ title: 'Total Balance', 		amount: '$12,450.80',	changeValue: '', 			changeText: 'Across all Accounts',	changeStatus: 'positive', 	note: 'Active Accounts', 	noteStatus: 'positive', lucideElement: <Landmark strokeWidth='1.5' className='text-bluish-cyan' /> },
-		{ title: 'Monthly Spending', 	amount: '$4,200.00', 	changeValue: '+$336', changeText: 'vs last month', 				changeStatus: 'negative', 	note: 'Manual & Linked', 	noteStatus: 'negative', lucideElement: <BanknoteArrowDown strokeWidth='1.5' className='text-bluish-cyan' /> },
-		{ title: 'Budget Used', 			amount: '68%', 				changeValue: '$769', 	changeText: 'remaining', 						changeStatus: 'neutral', 		note: 'Target < 80%', 		noteStatus: 'positive', lucideElement: <ChartPie strokeWidth='1.5' className='text-bluish-cyan' /> },
-		{ title: 'Savings Rate', 			amount: '19%', 				changeValue: '+3%', 	changeText: 'vs last month', 				changeStatus: 'positive', 	note: 'Goal 25%', 				noteStatus: 'positive', lucideElement: <PiggyBank strokeWidth='1.5' className='text-bluish-cyan' /> },
+		{
+			title: 'Total Balance',
+			amount: metricsData.totalBalance.amount,
+			changeValue: metricsData.totalBalance.changeValue,
+			changeText: 'Across all Accounts',
+			changeStatus: metricsData.totalBalance.changeStatus,
+			note: 'Active Accounts',
+			noteStatus: metricsData.totalBalance.noteStatus,
+			lucideElement: <Landmark strokeWidth='1.5' className='text-bluish-cyan' />
+		},
+		{
+			title: 'Monthly Spending',
+			amount: metricsData.monthlySpending.amount,
+			changeValue: metricsData.monthlySpending.changeValue,
+			changeText: 'vs last month',
+			changeStatus: metricsData.monthlySpending.changeStatus,
+			note: 'Manual & Linked',
+			noteStatus: metricsData.monthlySpending.noteStatus,
+			lucideElement: <BanknoteArrowDown strokeWidth='1.5' className='text-bluish-cyan' />
+		},
+		{
+			title: 'Budget Used',
+			amount: metricsData.budgetUsed.amount,
+			changeValue: metricsData.budgetUsed.changeValue,
+			changeText: 'remaining',
+			changeStatus: metricsData.budgetUsed.changeStatus,
+			note: 'Target < 80%',
+			noteStatus: metricsData.budgetUsed.noteStatus,
+			lucideElement: <ChartPie strokeWidth='1.5' className='text-bluish-cyan' />
+		},
+		{
+			title: 'Savings Rate',
+			amount: metricsData.savingsRate.amount,
+			changeValue: metricsData.savingsRate.changeValue,
+			changeText: 'vs last month',
+			changeStatus: metricsData.savingsRate.changeStatus,
+			note: 'Goal 25%',
+			noteStatus: metricsData.savingsRate.noteStatus,
+			lucideElement: <PiggyBank strokeWidth='1.5' className='text-bluish-cyan' />
+		},
 	];
 
 	return (
@@ -81,40 +192,45 @@ const MonthlySpendingChart = ({ transactions }: { transactions: Transaction[] })
 	const [timeRange, setTimeRange] = React.useState<'6M' | '1Y' | 'All'>('6M');
 
 	const data = React.useMemo(() => {
+		console.log('Recalculating...');
 		const expenseTransactions = transactions.filter(tx => tx.type === 'EXPENSE');
 		if (expenseTransactions.length === 0) return [];
 
 		const now = new Date();
+		const currentYear = now.getUTCFullYear();
+		const currentMonth = now.getUTCMonth();
+
 		let monthCount = 6;
 
 		if (timeRange === '1Y') {
-			monthCount = 12;
+			monthCount = 13;
 		} else if (timeRange === 'All') {
 			const oldestTimestamp = Math.min(
 				...expenseTransactions.map((tx) => new Date(tx.date).getTime())
 			);
 			const oldestDate = new Date(oldestTimestamp);
 			
-			monthCount = (now.getFullYear() - oldestDate.getFullYear()) * 12 + (now.getMonth() - oldestDate.getMonth()) + 1;
+			monthCount = (currentYear - oldestDate.getUTCFullYear()) * 12 + (currentMonth - oldestDate.getUTCMonth()) + 1;
 			monthCount = Math.max(monthCount, 1);
 		}
 
 		const monthlyTotals: Record<string, { xv: string; yv: number }> = {};
 
 		for (let i = monthCount - 1; i >= 0; i--) {
-			const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-			const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-			const monthLabel = d.toLocaleString('en-US', { month: 'short' }).toUpperCase();
+			const d = new Date(Date.UTC(currentYear, currentMonth - i, 1));
+			const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+			const monthLabel = d.toLocaleString('en-US', { timeZone: 'UTC', year: '2-digit', month: 'short' });
 			
 			monthlyTotals[key] = { xv: monthLabel, yv: 0 };
 		}
 
 		expenseTransactions.forEach((tx) => {
 			const txDate = new Date(tx.date);
-			const key = `${txDate.getFullYear()}-${String(txDate.getMonth() + 1).padStart(2, '0')}`;
+			const key = `${txDate.getUTCFullYear()}-${String(txDate.getUTCMonth() + 1).padStart(2, '0')}`;
 
 			if (monthlyTotals[key]) {
-				monthlyTotals[key].yv += Number(tx.amount);
+				monthlyTotals[key].yv += tx.amount;
+				monthlyTotals[key].yv = Number(monthlyTotals[key].yv.toFixed(2));
 			}
 		});
 
@@ -126,7 +242,7 @@ const MonthlySpendingChart = ({ transactions }: { transactions: Transaction[] })
 			<div className='flex items-center justify-between mb-4'>
 				<h2 className='text-lg font-semibold text-gray-800'>Monthly Spending History</h2>
 				<div className='flex gap-4 text-xs font-medium text-gray-400'>
-					{(['6M', '1Y', 'All'] as ('6M' | '1Y' | 'All')[]).map((range) => (
+					{(['6M', '1Y', 'All'] as ('6M' | '1Y' | 'All')[]).map(range => (
 						<button
 							key={range}
 							onClick={() => setTimeRange(range)}
@@ -136,7 +252,7 @@ const MonthlySpendingChart = ({ transactions }: { transactions: Transaction[] })
 									: 'hover:text-gray-600'
 							}`}
 						>
-							{range === 'All' ? 'All' : range}
+							{range}
 						</button>
 					))}
 				</div>
@@ -155,13 +271,13 @@ const MonthlySpendingChart = ({ transactions }: { transactions: Transaction[] })
 const CategoryBreakdown = ({ transactions }: { transactions: Transaction[] }) => {
 	const { data, icons } = React.useMemo(() => {
 		const now = new Date();
-		const currentYear = now.getFullYear();
-		const currentMonth = now.getMonth();
+		const currentYear = now.getUTCFullYear();
+		const currentMonth = now.getUTCMonth();
 
 		const monthExpenses = transactions.filter((tx) => {
 			if (tx.type !== 'EXPENSE') return false;
 			const d = new Date(tx.date);
-			return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+			return d.getUTCFullYear() === currentYear && d.getUTCMonth() === currentMonth;
 		});
 
 		const totalSpent = monthExpenses.reduce((sum, tx) => sum + tx.amount, 0);
@@ -205,7 +321,7 @@ const CategoryBreakdown = ({ transactions }: { transactions: Transaction[] }) =>
 		}
 
 		const formatted = finalCategories.map(item => {
-			const percentage = Math.round((item.value / totalSpent) * 100);
+			const percentage = Math.round(item.value / totalSpent * 100);
 			return {
 				name: item.name,
 				value: percentage,
@@ -227,16 +343,14 @@ const CategoryBreakdown = ({ transactions }: { transactions: Transaction[] }) =>
 			<div className='h-50 mb-4'>
 				<PieChart data={data} />
 			</div>
-			<div className='grid grid-cols-2 gap-x-14 gap-y-2 text-sm'>
+			<div className='grid grid-cols-2 gap-x-16 gap-y-3 text-sm'>
 				{data.map((d, index) => (
-					<div key={index} className='flex justify-between gap-1 text-gray-700 font-medium'>
-						<div className='flex gap-1'>
-							<span>
-								<DynamicIcon name={icons[index] as IconName} width='18px' height='18px' strokeWidth='1.5' color={d.fill} fill={d.name === 'Other' ? d.fill : 'transparent'} />
-							</span>
-							<div>{d.name}</div>
+					<div key={index} className='text-gray-700 font-medium'>
+						<div className='flex items-center justify-between'>
+							<div><DynamicIcon name={icons[index] as IconName} width='22px' height='22px' strokeWidth='1.5' color={d.fill} fill={d.name === 'Other' ? d.fill : 'transparent'} /></div>
+							<div>{d.value}%</div>
 						</div>
-						<div>{d.value}%</div>
+					<div>{d.name}</div>
 					</div>
 				))}
 			</div>
@@ -245,21 +359,23 @@ const CategoryBreakdown = ({ transactions }: { transactions: Transaction[] }) =>
 };
 
 const RecentTransactions = ({ transactions }: { transactions: Transaction[] }) => {
-	const now = new Date();
-	const currentYear = now.getFullYear();
-	const currentMonth = now.getMonth();
-	const currentDay = now.getDate();
-
 	const data = React.useMemo(() => {
+		const now = new Date();
+		const currentYear = now.getUTCFullYear();
+		const currentMonth = now.getUTCMonth();
+
 		return transactions
 			.filter(tx => {
 				const d = new Date(tx.date);
-				return d.getFullYear() === currentYear && d.getMonth() === currentMonth;
+				return d.getUTCFullYear() === currentYear && d.getUTCMonth() === currentMonth;
 			})
 			.slice(0, 4)
 	}, [transactions]);
 
 	const getTransactionDate = (d: string | number | Date): string => {
+		const now = new Date();
+		const currentDay = now.getDate();
+
 		const date = new Date(d);
 		if (date.getDate() === currentDay) {
 			return 'Today';
@@ -280,19 +396,26 @@ const RecentTransactions = ({ transactions }: { transactions: Transaction[] }) =
 			</div>
 
 			<div className='divide-y divide-gray-100'>
-				{data.map(tx => (
+				{data.length > 0 ? data.map(tx => (
 					<div key={tx.id} className='py-3 flex items-center justify-between'>
-						<div>
-							<p className='text-sm font-medium text-gray-900'>{tx.category.name}</p>
-							<p className='text-xs text-gray-400'>
-								{tx.type[0].toUpperCase() + tx.type.substring(1).toLowerCase()} • {getTransactionDate(tx.date)}
-							</p>
+						<div className='flex items-center gap-2'>
+							<div>
+								<DynamicIcon name={tx.category.icon ? tx.category.icon as IconName : 'box'} width='26px' height='26px' strokeWidth='1.5' color={tx.category.color || '#2b8dae'} />
+							</div>
+							<div>
+								<p className='text-sm font-medium text-gray-900'>{tx.category.name}</p>
+								<p className='text-xs text-gray-400'>
+									{tx.type[0].toUpperCase() + tx.type.substring(1).toLowerCase()} • {getTransactionDate(tx.date)}
+								</p>
+							</div>
 						</div>
 						<span className={`text-sm font-semibold ${tx.type === 'INCOME' ? 'text-emerald-600' : 'text-red-500'}`}>
-							{tx.type === 'INCOME' ? `+$${tx.amount.toFixed(2)}` : `-$${tx.amount.toFixed(2)}`}
+							{tx.type === 'INCOME' ? '+' : '-'}{tx.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
 						</span>
 					</div>
-				))}
+				)) : (
+					<div>Empty</div>
+				)}
 			</div>
 		</div>
 	);
@@ -307,7 +430,7 @@ const TopBudgets = ({ budgets }: { budgets: Budget[] }) => {
 		<div className='lg:col-span-1 p-6 flex flex-col bg-white border border-gray-100 rounded-xl shadow-sm'>
 			<h2 className='mb-4 text-lg font-semibold text-gray-800'>Top Budgets To Watch</h2>
 			<div className='flex-1 flex flex-col justify-between text-gray-800'>
-				{data.map(budget => (
+				{data.length > 0 ? data.map(budget => (
 					<div key={budget.id}>
 						<div className='mb-1 flex justify-between'>
 							<h4 className='flex items-center gap-1'>
@@ -315,15 +438,17 @@ const TopBudgets = ({ budgets }: { budgets: Budget[] }) => {
 								<span>{budget.category.name}</span>
 							</h4>
 							<span>
-								<span className={budget.isOverBudget! ? 'text-red-500' : ''}>${budget.spentAmount}</span>
-								/{budget.limitAmount}
+								<span className={budget.isOverBudget! ? 'text-red-500' : ''}>${budget.spentAmount!.toLocaleString('en-US', { maximumFractionDigits: 2 })}</span>
+								/{budget.limitAmount.toLocaleString('en-US', { maximumFractionDigits: 2 })}
 								</span>
 						</div>
 						<div className='w-full h-2.5 bg-bluish-cyan/15 border border-navy-blue/30 rounded-full'>
 							<div style={{ width: `${budget.isOverBudget! ? '100' : (budget.spentAmount! / budget.limitAmount * 100).toFixed()}%`, backgroundColor: budget.isOverBudget! ? 'var(--color-red-400)' : budget.category.color || '#2b8dae' }} className='h-[8.4px] rounded-full' />
 						</div>
 					</div>
-				))}
+				)) : (
+					<div>Empty</div>
+				)}
 			</div>
 		</div>
 	);

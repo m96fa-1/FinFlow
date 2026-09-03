@@ -2,7 +2,7 @@ import React from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { validateFullName, validateEmail, validatePassword } from '../lib/utils'
-import LogoTitle from '../components/LogoTitle'
+import { LogoTitle } from '../components/Logos'
 import clsx from 'clsx'
 import background from '../assets/register-background.jpg'
 
@@ -110,7 +110,7 @@ export default function RegisterPage() {
 							value={fullName}
 							onChange={(e) => setFullName(e.target.value)}
 							required
-							placeholder='Alex Adams'
+							placeholder='Alex Andersen'
 							autoComplete='name'
 							className='form-input'
 						/>

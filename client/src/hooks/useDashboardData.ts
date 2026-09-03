@@ -18,9 +18,11 @@ export function useDashboardData() {
 
 	React.useEffect(() => {
 		async function fetchDashboard() {
+			const now = new Date();
+			
 			const [transactionRes, budgetRes] = await Promise.all([
 				transactionsApi.getAll(),
-				budgetsApi.getAll({ month: new Date().getMonth() + 1, year: new Date().getFullYear() }),
+				budgetsApi.getAll({ month: now.getUTCMonth() + 1, year: now.getUTCFullYear() }),
 			]);
 
 			setData({
