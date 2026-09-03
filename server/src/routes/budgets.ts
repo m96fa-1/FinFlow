@@ -44,9 +44,11 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 			_sum: { amount: true },
 			where: {
 				userId: req.userId,
-				type: 'EXPENSE',
-				date: { gte: startOfMonth, lte: endOfMonth },
 				categoryId: { in: budgets.map(b => b.categoryId) },
+				date: { gte: startOfMonth, lte: endOfMonth },
+				category: {
+					type: 'EXPENSE',
+				},
 			},
 		});
 
@@ -109,8 +111,6 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
 	}
 });
 
-// TODO: 3. Make the budget only creatable with an EXPENSE type category (think about it)
-// TODO: 4. Make the budget only creatable if there's no other budget with the same category in the same month and year
 // ==========================================
 // 3. POST /api/budgets
 // Create or update a budget limit for a category
@@ -130,14 +130,14 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 			});
 		}
 
-		const existingCategory = await prisma.category.findFirst({
+		const targetCategory = await prisma.category.findFirst({
 			where: {
 				id: String(categoryId),
 				userId: req.userId,
 			},
 		});
-
-		if (!existingCategory) {
+		
+		if (!targetCategory || targetCategory.type !== 'EXPENSE') {
 			return res.status(400).json({ success: false, message: 'Invalid categoryId provided' });
 		}
 

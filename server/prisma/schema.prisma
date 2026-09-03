@@ -6,8 +6,7 @@ datasource db {
 	provider = "postgresql"
 }
 
-// TODO: 2. Rename this trash to CategoryType
-enum TransactionType {
+enum CategoryType {
 	INCOME
 	EXPENSE
 }
@@ -35,7 +34,7 @@ model Category {
 	name					String
 	icon					String?
 	color					String?
-	type					TransactionType		@default(EXPENSE)
+	type					CategoryType			@default(EXPENSE)
 
 	user					User?							@relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -45,13 +44,11 @@ model Category {
 	@@unique([name, userId])
 }
 
-// TODO: 1. Remove the type from Transaction model since you already have one inside Category and that can create a conflict.
 model Transaction {
 	id						String						@id @default(uuid())
 	userId				String
 	categoryId		String
 	amount				Float
-	type					TransactionType		@default(EXPENSE)
 	date					DateTime					@default(now())
 	description		String?
 	createdAt			DateTime					@default(now())
@@ -73,5 +70,5 @@ model Budget {
 	user					User							@relation(fields: [userId], references: [id], onDelete: Cascade)
 	category			Category					@relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
-	@@unique([userId, categoryId, month, year])
+	@@unique([userId, categoryId, period, month, year])
 }

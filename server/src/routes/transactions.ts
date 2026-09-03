@@ -1,6 +1,5 @@
 import { Router, Response } from 'express'
 import { prisma } from '../lib/prisma'
-import { $Enums } from '@prisma/client'
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth'
 
 const router = Router();
@@ -27,7 +26,7 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 
 		const whereCondition: any = {
 			userId: req.userId,
-			type: parsedType,
+			...(parsedType ? { category: { type: parsedType } } : {}),
 		};
 
 		if (parsedCategory) {
@@ -38,7 +37,7 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 				},
 			});
 			if (!fetchedCategory) {
-				return res.status(404).json({ success: false, message: `Category ${category} was not found` });
+				return res.status(404).json({ success: false, message: `Category ${parsedCategory} was not found` });
 			}
 
 			whereCondition.categoryId = fetchedCategory.id;
@@ -101,7 +100,7 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
 // ==========================================
 router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 	try {
-		const { categoryId, amount, type, date, description } = req.body;
+		const { categoryId, amount, date, description } = req.body;
 
 		if (!req.userId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });
@@ -125,16 +124,8 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 			return res.status(400).json({ success: false, message: 'Invalid categoryId provided' });
 		}
 
-		if (type && String(type) !== 'INCOME' && String(type) !== 'EXPENSE') {
-			return res.status(400).json({
-				success: false,
-				message: 'type must be either \'INCOME\' or \'EXPENSE\'',
-			});
-		}
-
 		const parsedCategoryId = String(categoryId);
 		const parsedAmount = parseFloat(amount);
-		const parsedType = type ? type as $Enums.TransactionType : undefined;
 		const parsedDate = date ? new Date(date) : undefined;
 		const parsedDescription = description ? String(description) : undefined;
 
@@ -143,7 +134,6 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 				userId: req.userId,
 				categoryId: parsedCategoryId,
 				amount: parsedAmount,
-				type: parsedType,
 				date: parsedDate,
 				description: parsedDescription,
 			},
@@ -170,7 +160,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 	try {
 		const { id } = req.params;
-		const { categoryId, amount, type, date, description } = req.body;
+		const { categoryId, amount, date, description } = req.body;
 
 		if (!req.userId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });
@@ -200,16 +190,8 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 			return res.status(404).json({ success: false, message: 'Transaction not found or unauthorized' });
 		}
 
-		if (type && String(type) !== 'INCOME' && String(type) !== 'EXPENSE') {
-			return res.status(400).json({
-				success: false,
-				message: 'type must be either \'INCOME\' or \'EXPENSE\'',
-			});
-		}
-
 		const parsedCategoryId = categoryId ? String(categoryId) : undefined;
 		const parsedAmount = amount !== undefined ? parseFloat(String(amount)) : undefined;
-		const parsedType = type ? type as $Enums.TransactionType : undefined;
 		const parsedDate = date ? new Date(date) : undefined;
 		const parsedDescription = description ? String(description) : undefined;
 
@@ -220,7 +202,6 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 			data: {
 				categoryId: parsedCategoryId,
 				amount: parsedAmount,
-				type: parsedType,
 				date: parsedDate,
 				description: parsedDescription,
 			},

@@ -59,7 +59,7 @@ const KeyMetricsSummary = ({ data }: { data: DashboardData; }) => {
 		let lastMonthExpenses = 0;
 
 		data.transactions.forEach(tx => {
-			if (tx.type === 'INCOME') {
+			if (tx.category.type === 'INCOME') {
 				totalIncome += tx.amount;
 			} else {
 				totalExpense += tx.amount;
@@ -70,10 +70,10 @@ const KeyMetricsSummary = ({ data }: { data: DashboardData; }) => {
 			const month = d.getUTCMonth();
 
 			if (year === currentYear && month === currentMonth) {
-				if (tx.type === 'INCOME') monthIncome += tx.amount;
+				if (tx.category.type === 'INCOME') monthIncome += tx.amount;
 				else monthExpenses += tx.amount;
 			} else if (year === lastMonthYear && month === lastMonth) {
-				if (tx.type === 'INCOME') lastMonthIncome += tx.amount;
+				if (tx.category.type === 'INCOME') lastMonthIncome += tx.amount;
 				else lastMonthExpenses += tx.amount;
 			}
 		});
@@ -192,8 +192,7 @@ const MonthlySpendingChart = ({ transactions }: { transactions: Transaction[] })
 	const [timeRange, setTimeRange] = React.useState<'6M' | '1Y' | 'All'>('6M');
 
 	const data = React.useMemo(() => {
-		console.log('Recalculating...');
-		const expenseTransactions = transactions.filter(tx => tx.type === 'EXPENSE');
+		const expenseTransactions = transactions.filter(tx => tx.category.type === 'EXPENSE');
 		if (expenseTransactions.length === 0) return [];
 
 		const now = new Date();
@@ -205,10 +204,8 @@ const MonthlySpendingChart = ({ transactions }: { transactions: Transaction[] })
 		if (timeRange === '1Y') {
 			monthCount = 13;
 		} else if (timeRange === 'All') {
-			const oldestTimestamp = Math.min(
-				...expenseTransactions.map((tx) => new Date(tx.date).getTime())
-			);
-			const oldestDate = new Date(oldestTimestamp);
+			// It's already ordered in dates from the api call so last transacion in the array is the oldest one
+			const oldestDate = new Date(expenseTransactions[expenseTransactions.length - 1].date);
 			
 			monthCount = (currentYear - oldestDate.getUTCFullYear()) * 12 + (currentMonth - oldestDate.getUTCMonth()) + 1;
 			monthCount = Math.max(monthCount, 1);
@@ -275,7 +272,7 @@ const CategoryBreakdown = ({ transactions }: { transactions: Transaction[] }) =>
 		const currentMonth = now.getUTCMonth();
 
 		const monthExpenses = transactions.filter((tx) => {
-			if (tx.type !== 'EXPENSE') return false;
+			if (tx.category.type !== 'EXPENSE') return false;
 			const d = new Date(tx.date);
 			return d.getUTCFullYear() === currentYear && d.getUTCMonth() === currentMonth;
 		});
@@ -405,12 +402,12 @@ const RecentTransactions = ({ transactions }: { transactions: Transaction[] }) =
 							<div>
 								<p className='text-sm font-medium text-gray-900'>{tx.category.name}</p>
 								<p className='text-xs text-gray-400'>
-									{tx.type[0].toUpperCase() + tx.type.substring(1).toLowerCase()} • {getTransactionDate(tx.date)}
+									{tx.category.type[0].toUpperCase() + tx.category.type.substring(1).toLowerCase()} • {getTransactionDate(tx.date)}
 								</p>
 							</div>
 						</div>
-						<span className={`text-sm font-semibold ${tx.type === 'INCOME' ? 'text-emerald-600' : 'text-red-500'}`}>
-							{tx.type === 'INCOME' ? '+' : '-'}{tx.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+						<span className={`text-sm font-semibold ${tx.category.type === 'INCOME' ? 'text-emerald-600' : 'text-red-500'}`}>
+							{tx.category.type === 'INCOME' ? '+' : '-'}{tx.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
 						</span>
 					</div>
 				)) : (

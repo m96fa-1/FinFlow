@@ -125,7 +125,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 		const normalizedName = String(name).trim();
 		const parsedIcon = icon ? String(icon) : undefined;
 		const parsedColor = color ? String(color) : undefined;
-		const parsedType = type ? type as $Enums.TransactionType : undefined;
+		const parsedType = type ? type as $Enums.CategoryType : undefined;
 
 		const newCategory = await prisma.category.create({
 			data: {
@@ -196,7 +196,7 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 		const parsedName = name ? String(name).trim() : undefined;
 		const parsedIcon = icon ? String(icon) : undefined;
 		const parsedColor = color ? String(color) : undefined;
-		const parsedType = type ? type as $Enums.TransactionType : undefined;
+		const parsedType = type ? type as $Enums.CategoryType : undefined;
 
 		const updatedCategory = await prisma.category.update({
 			where: {

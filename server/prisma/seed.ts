@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import { PrismaClient, TransactionType } from '@prisma/client'
+import { PrismaClient, CategoryType } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import pg from 'pg'
 
@@ -9,12 +9,12 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 const categories = [
-	{ name: 'Housing & Rent', 	icon: 'house', 							color: '#2B8DAE', 	type: TransactionType.EXPENSE },
-	{ name: 'Food & Groceries', icon: 'shopping-basket', 		color: '#249AAB', 	type: TransactionType.EXPENSE },
-	{ name: 'Transportation', 	icon: 'car', 								color: '#1DA9A7', 	type: TransactionType.EXPENSE },
-	{ name: 'Entertainment', 		icon: 'gamepad-2', 					color: '#16B7A4', 	type: TransactionType.EXPENSE },
-	{ name: 'Income / Salary', 	icon: 'banknote-arrow-up', 	color: '#0FC4A1', 	type: TransactionType.INCOME 	},
-	{ name: 'Utilities', 				icon: 'zap', 								color: '#08D29E', 	type: TransactionType.EXPENSE },
+	{ name: 'Housing & Rent', 	icon: 'house', 							color: '#2B8DAE', 	type: CategoryType.EXPENSE },
+	{ name: 'Food & Groceries', icon: 'shopping-basket', 		color: '#249AAB', 	type: CategoryType.EXPENSE },
+	{ name: 'Transportation', 	icon: 'car', 								color: '#1DA9A7', 	type: CategoryType.EXPENSE },
+	{ name: 'Entertainment', 		icon: 'gamepad-2', 					color: '#16B7A4', 	type: CategoryType.EXPENSE },
+	{ name: 'Income / Salary', 	icon: 'banknote-arrow-up', 	color: '#0FC4A1', 	type: CategoryType.INCOME 	},
+	{ name: 'Utilities', 				icon: 'zap', 								color: '#08D29E', 	type: CategoryType.EXPENSE },
 ];
 
 async function main() {

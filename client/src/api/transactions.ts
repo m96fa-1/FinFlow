@@ -4,7 +4,6 @@ import type { Transaction, PaginatedResponse, ApiResponse, DeleteResponse } from
 export interface CreateTransactionInput {
 	categoryId: string;
 	amount: number;
-	type?: 'INCOME' | 'EXPENSE';
 	date?: string;
 	description?: string;
 }

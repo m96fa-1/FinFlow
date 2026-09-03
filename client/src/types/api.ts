@@ -1,4 +1,4 @@
-export type TransactionType = 'INCOME' | 'EXPENSE';
+export type CategoryType = 'INCOME' | 'EXPENSE';
 export type BudgetPeriod = 'MONTHLY' | 'YEARLY';
 
 export interface User {
@@ -14,7 +14,7 @@ export interface Category {
 	name:								string;
 	icon:								string | null;
 	color:							string | null;
-	type:								TransactionType;
+	type:								CategoryType;
 	_count:							{ transactions: number; budgets: number; };
 }
 
@@ -23,7 +23,6 @@ export interface Transaction {
 	userId:							string;
 	categoryId:					string;
 	amount:							number;
-	type:								TransactionType;
 	date:								string;
 	description:				string | null;
 	createdAt:					string;
