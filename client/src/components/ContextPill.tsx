@@ -1,8 +1,8 @@
-import React from 'react'
 import { useLocation } from 'react-router-dom'
+
 import { CalendarDays } from 'lucide-react'
 
-export const ContextPill: React.FC = () => {
+export default function ContextPill() {
 	const location = useLocation();
 
 	// Getting page name from URL

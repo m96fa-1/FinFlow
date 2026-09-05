@@ -1,11 +1,15 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import DashboardLayout from '../layouts/DashboardLayout'
-import { useDashboardData, type DashboardData } from '../hooks/useDashboardData'
+
+import { useDashboardData, type DashboardData } from '../hooks/useData'
 import type { Transaction, Budget } from '../types/api'
-import { ContextPill } from '../components/ContextPill'
+
+import DashboardLayout from '../layouts/DashboardLayout'
+import AddTransactionButton from '../components/AddTransactionButton'
+import ContextPill from '../components/ContextPill'
 import { LineChart, PieChart } from '../components/Charts'
-import { BanknoteArrowDown, ChartPie, Landmark, PiggyBank } from 'lucide-react'
+
+import { BanknoteArrowDown, Layers, Landmark, PiggyBank } from 'lucide-react'
 import { DynamicIcon, type IconName } from 'lucide-react/dynamic'
 
 export default function DashboardPage() {
@@ -24,9 +28,7 @@ export default function DashboardPage() {
 	return (
 		<DashboardLayout>
 			<div className='flex items-center justify-between'>
-				<Link to='/transactions/new' className='inline-flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow transition-colors duration-150'>
-					+ Add Transaction
-				</Link>
+				<AddTransactionButton />
 				<ContextPill />
 			</div>
 
@@ -143,14 +145,14 @@ const KeyMetricsSummary = ({ data }: { data: DashboardData; }) => {
 			lucideElement: <BanknoteArrowDown strokeWidth='1.5' className='text-bluish-cyan' />
 		},
 		{
-			title: 'Budget Used',
+			title: 'Budgets Used',
 			amount: metricsData.budgetUsed.amount,
 			changeValue: metricsData.budgetUsed.changeValue,
 			changeText: 'remaining',
 			changeStatus: metricsData.budgetUsed.changeStatus,
 			note: 'Target < 80%',
 			noteStatus: metricsData.budgetUsed.noteStatus,
-			lucideElement: <ChartPie strokeWidth='1.5' className='text-bluish-cyan' />
+			lucideElement: <Layers strokeWidth='1.5' className='text-bluish-cyan' />
 		},
 		{
 			title: 'Savings Rate',
@@ -215,7 +217,7 @@ const MonthlySpendingChart = ({ transactions }: { transactions: Transaction[] })
 
 		for (let i = monthCount - 1; i >= 0; i--) {
 			const d = new Date(Date.UTC(currentYear, currentMonth - i, 1));
-			const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+			const key = `${d.getUTCFullYear()}-${d.getUTCMonth()}`;
 			const monthLabel = d.toLocaleString('en-US', { timeZone: 'UTC', year: '2-digit', month: 'short' });
 			
 			monthlyTotals[key] = { xv: monthLabel, yv: 0 };
@@ -223,7 +225,7 @@ const MonthlySpendingChart = ({ transactions }: { transactions: Transaction[] })
 
 		expenseTransactions.forEach((tx) => {
 			const txDate = new Date(tx.date);
-			const key = `${txDate.getUTCFullYear()}-${String(txDate.getUTCMonth() + 1).padStart(2, '0')}`;
+			const key = `${txDate.getUTCFullYear()}-${txDate.getUTCMonth()}`;
 
 			if (monthlyTotals[key]) {
 				monthlyTotals[key].yv += tx.amount;
@@ -237,12 +239,13 @@ const MonthlySpendingChart = ({ transactions }: { transactions: Transaction[] })
 	return (
 		<div className='lg:col-span-2 min-h-80 p-6 flex flex-col justify-between bg-white rounded-xl border border-gray-100 shadow-sm'>
 			<div className='flex items-center justify-between mb-4'>
-				<h2 className='text-lg font-semibold text-gray-800'>Monthly Spending History</h2>
+				<h2 className='text-gray-800 text-lg font-semibold'>Monthly Spending History</h2>
 				<div className='flex gap-4 text-xs font-medium text-gray-400'>
 					{(['6M', '1Y', 'All'] as ('6M' | '1Y' | 'All')[]).map(range => (
 						<button
 							key={range}
 							onClick={() => setTimeRange(range)}
+
 							className={`rounded-md transition-all ${
 								timeRange === range
 									? 'bg-white text-bluish-cyan font-semibold'
@@ -356,29 +359,22 @@ const CategoryBreakdown = ({ transactions }: { transactions: Transaction[] }) =>
 };
 
 const RecentTransactions = ({ transactions }: { transactions: Transaction[] }) => {
-	const data = React.useMemo(() => {
-		const now = new Date();
-		const currentYear = now.getUTCFullYear();
-		const currentMonth = now.getUTCMonth();
-
-		return transactions
-			.filter(tx => {
-				const d = new Date(tx.date);
-				return d.getUTCFullYear() === currentYear && d.getUTCMonth() === currentMonth;
-			})
-			.slice(0, 4)
-	}, [transactions]);
+	const data = React.useMemo(() => transactions.slice(0, 4), [transactions]);
 
 	const getTransactionDate = (d: string | number | Date): string => {
 		const now = new Date();
+		const currentYear = now.getFullYear();
+		const currentMonth = now.getMonth();
 		const currentDay = now.getDate();
 
 		const date = new Date(d);
-		if (date.getDate() === currentDay) {
-			return 'Today';
-		}
-		if (date.getDate() === currentDay - 1) {
-			return 'Yesterday';
+		if (date.getFullYear() === currentYear && date.getMonth() === currentMonth) {
+			if (date.getDate() === currentDay) {
+				return 'Today';
+			}
+			if (date.getDate() === currentDay - 1) {
+				return 'Yesterday';
+			}
 		}
 		return date.toLocaleString('en-US', { month: 'short', day: '2-digit' });
 	};
@@ -386,7 +382,7 @@ const RecentTransactions = ({ transactions }: { transactions: Transaction[] }) =
 	return (
 		<div className='lg:col-span-2 p-6 bg-white border border-gray-100 rounded-xl shadow-sm'>
 			<div className='flex items-center justify-between mb-4'>
-				<h2 className='text-lg font-semibold text-gray-800'>Recent Transactions ({new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })})</h2>
+				<h2 className='text-lg font-semibold text-gray-800'>Recent Transactions</h2>
 				<Link to='/transactions' className='text-xs font-semibold text-emerald-600 hover:underline'>
 					View All
 				</Link>
@@ -406,9 +402,9 @@ const RecentTransactions = ({ transactions }: { transactions: Transaction[] }) =
 								</p>
 							</div>
 						</div>
-						<span className={`text-sm font-semibold ${tx.category.type === 'INCOME' ? 'text-emerald-600' : 'text-red-500'}`}>
+						<div className={`text-sm font-semibold ${tx.category.type === 'INCOME' ? 'text-emerald-600' : 'text-red-500'}`}>
 							{tx.category.type === 'INCOME' ? '+' : '-'}{tx.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
-						</span>
+						</div>
 					</div>
 				)) : (
 					<div>Empty</div>

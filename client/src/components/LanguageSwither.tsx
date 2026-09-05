@@ -1,7 +1,10 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { type LanguageCode, useTranslation } from '../context/TranslationContext'
+
 import clsx from 'clsx'
+
+import { type LanguageCode, useTranslation } from '../context/TranslationContext'
+
 import { Globe, ChevronDown } from 'lucide-react'
 
 export default function LanguageSwitcher({ className }: { className?: string; }) {

@@ -1,9 +1,12 @@
 import React from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
-import { validateFullName, validateEmail, validatePassword } from '../lib/utils'
-import { LogoTitle } from '../components/Logos'
+
 import clsx from 'clsx'
+import { validateFullName, validateEmail, validatePassword } from '../lib/utils'
+import { useAuth } from '../context/AuthContext'
+
+import { LogoTitle } from '../components/Logos'
+
 import background from '../assets/register-background.jpg'
 
 export default function RegisterPage() {

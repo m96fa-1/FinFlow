@@ -9,6 +9,10 @@ html, body, #root {
 	overflow: hidden;
 }
 
+svg:focus, svg *:focus {
+	outline: none;
+}
+
 a, button {
 	cursor: pointer;
 }

@@ -1,12 +1,15 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+
+import clsx from 'clsx'
 import { type TranslationText, useTranslation } from '../context/TranslationContext'
+
 import { Logo, LogoTitle } from '../components/Logos'
 import LanguageSwitcher from '../components/LanguageSwither'
 import { LineChart, PieChart } from '../components/Charts'
-import { ArrowRight, ArrowRightLeft, BanknoteArrowDown, ChartLine, ChartPie, CircleQuestionMark, HandCoins, Landmark, LayoutDashboard, LineChartIcon, LinkIcon, LockKeyhole, LogOut, PiggyBank, ShieldCheck, TrendingUp, UsersRound } from 'lucide-react'
+
+import { ArrowRight, ArrowRightLeft, BanknoteArrowDown, ChartLine, ChartPie, CircleQuestionMark, HandCoins, Landmark, Layers, LayoutDashboard, LineChartIcon, LinkIcon, LockKeyhole, LogOut, PiggyBank, ShieldCheck, TrendingUp, UsersRound } from 'lucide-react'
 import { DynamicIcon, type IconName } from 'lucide-react/dynamic'
-import clsx from 'clsx'
 
 export default function RootPage() {
 	const { text } = useTranslation();
@@ -69,7 +72,7 @@ const TopSection = () => {
 		{
 			title: 'Smart Budgeting',
 			description: 'Custom spending limits with automated visual progress bars and alert thresholds.',
-			icon: <ChartPie width='100%' height='100%' color='var(--color-bluish-cyan)' strokeWidth='1.5' />,
+			icon: <Layers width='100%' height='100%' color='var(--color-bluish-cyan)' strokeWidth='1.5' />,
 		},
 		{
 			title: 'Multi-Account Management',
@@ -86,7 +89,7 @@ const TopSection = () => {
 	const metrics = [
 		{ title: 'Total Balance', 		amount: '$12,450.80',	changeValue: '', 			changeText: 'Across all Accounts',	changeStatus: 'positive', 	note: 'Active Accounts', 	noteStatus: 'positive', lucideElement: <Landmark width={12} height={12} className='text-bluish-cyan' /> },
 		{ title: 'Monthly Spending', 	amount: '$4,200.00', 	changeValue: '+$336', changeText: 'vs last month', 				changeStatus: 'negative', 	note: 'Manual & Linked', 	noteStatus: 'negative', lucideElement: <BanknoteArrowDown width={12} height={12} className='text-bluish-cyan' /> },
-		{ title: 'Budget Used', 			amount: '68%', 				changeValue: '$769', 	changeText: 'remaining', 						changeStatus: 'neutral', 		note: 'Target < 80%', 		noteStatus: 'positive', lucideElement: <ChartPie width={12} height={12} className='text-bluish-cyan' /> },
+		{ title: 'Budgets Used', 			amount: '68%', 				changeValue: '$769', 	changeText: 'remaining', 						changeStatus: 'neutral', 		note: 'Target < 80%', 		noteStatus: 'positive', lucideElement: <Layers width={12} height={12} className='text-bluish-cyan' /> },
 		{ title: 'Savings Rate', 			amount: '26%', 				changeValue: '+3%', 	changeText: 'vs last month', 				changeStatus: 'positive', 	note: 'Goal 25%', 				noteStatus: 'positive', lucideElement: <PiggyBank width={12} height={12} className='text-bluish-cyan' /> },
 	];
 
@@ -140,72 +143,72 @@ const TopSection = () => {
 								<div className='text-gray-700 text-sm font-semibold'>Dashboard</div>
 								<div className='flex items-center gap-2'>
 									<div className='p-1'><CircleQuestionMark width={12} height={12} strokeWidth={2} color='var(--color-gray-500)' /></div>
-										<div className='w-4.5 h-4.5 flex items-center justify-center bg-linear-45 from-bluish-cyan to-greenish-cyan text-white text-[8px] font-semibold rounded-full select-none drag-none'>AA</div>
-									</div>
+									<div className='w-4.5 h-4.5 flex items-center justify-center bg-linear-45 from-bluish-cyan to-greenish-cyan text-white text-[8px] font-semibold rounded-full select-none drag-none'>AA</div>
 								</div>
-								{/* Metrics */}
-								<div className='mt-2 flex gap-2'>
-									{metrics.map((metric, index) => (
-										<div key={index} className='flex-1 rounded-md shadow-sm'>
-											<div className='p-1.5 bg-white rounded-t-md border-x border-t border-gray-100'>
-												<div className='flex items-center justify-between'>
-													<span className='text-[9px] font-medium text-gray-500'>{metric.title}</span>
-													<div>{metric.lucideElement}</div>
-												</div>
-												<div className='text-[13px] font-bold text-gray-900'>{metric.amount}</div>
-												<div className='text-[8px] text-gray-600 font-medium'>
-													<span className={metric.changeStatus === 'positive' ? 'text-emerald-600' : metric.changeStatus === 'negative' ? 'text-red-500' : 'text-black'}>
-														{metric.changeValue}
-													</span>
-													{' ' + metric.changeText}
-												</div>
+							</div>
+							{/* Metrics */}
+							<div className='mt-2 flex gap-3'>
+								{metrics.map((metric, index) => (
+									<div key={index} className='flex-1 rounded-md shadow-sm'>
+										<div className='p-1.5 bg-white rounded-t-md border-x border-t border-gray-100'>
+											<div className='flex items-center justify-between'>
+												<span className='text-[9px] font-medium text-gray-500'>{metric.title}</span>
+												<div>{metric.lucideElement}</div>
 											</div>
-											<div className={`p-0.5 ${metric.noteStatus === 'positive' ? 'bg-green-200' : 'bg-[#ffc0c0]'} text-[8px] text-center rounded-b-md`}>{metric.note}</div>
-										</div>
-									))}
-								</div>
-								<div className='mt-2 grid grid-cols-3 gap-2'>
-									{/* Line Chart */}
-									<div className='col-span-2 h-full flex flex-col justify-between bg-white rounded-md border border-gray-100 shadow-sm'>
-										<div className='pt-2 px-2 flex items-center justify-between'>
-											<h2 className='text-[10px] font-semibold text-gray-800'>Monthly Spending History</h2>
-											<div className='flex gap-2 text-[8px] font-medium text-gray-400'>
-												{(['6M', '1Y', 'All'] as ('6M' | '1Y' | 'All')[]).map(range => (
-													<div key={range} className={clsx('rounded-md transition-all', range === '6M' && 'bg-white text-bluish-cyan font-semibold')}>
-														{range}
-													</div>
-												))}
+											<div className='text-[13px] font-bold text-gray-900'>{metric.amount}</div>
+											<div className='text-[8px] text-gray-600 font-medium'>
+												<span className={metric.changeStatus === 'positive' ? 'text-emerald-600' : metric.changeStatus === 'negative' ? 'text-red-500' : 'text-black'}>
+													{metric.changeValue}
+												</span>
+												{' ' + metric.changeText}
 											</div>
 										</div>
-										<div className='mt-2 mr-4 ml-1 -mb-1.5 flex-1 text-[8px]'>
-											<LineChart data={lineChartData} strokeWidth={0.75} />
-										</div>
+										<div className={`p-0.5 ${metric.noteStatus === 'positive' ? 'bg-green-200' : 'bg-[#ffc0c0]'} text-[8px] text-center rounded-b-md`}>{metric.note}</div>
 									</div>
-									{/* Donut Chart */}
-									<div className='lg:col-span-1 p-2 bg-white rounded-md border border-gray-100 shadow-sm'>
-										<h2 className='text-[10px] font-semibold text-gray-800'>Category Breakdown</h2>
-										<div className='h-20 mb-4 text-[8px]'>
-											<PieChart data={donutChartData} />
-										</div>
-										<div className='grid grid-cols-2 gap-x-8 gap-y-1 text-gray-700 text-[8px] font-medium leading-2.75'>
-											{donutChartData.map((d, index) => (
-												<div key={index}>
-													<div className='flex items-center justify-between'>
-														<div><DynamicIcon name={icons[index] as IconName} width='10px' height='10px' strokeWidth='1.5' color={d.fill} fill={d.name === 'Other' ? d.fill : 'transparent'} /></div>
-														<div>{d.value}%</div>
-													</div>
-												<div>{d.name}</div>
+								))}
+							</div>
+							<div className='mt-3 grid grid-cols-3 gap-3'>
+								{/* Line Chart */}
+								<div className='col-span-2 h-full flex flex-col justify-between bg-white rounded-md border border-gray-100 shadow-sm'>
+									<div className='pt-2 px-2 flex items-center justify-between'>
+										<h2 className='text-[10px] font-semibold text-gray-800'>Monthly Spending History</h2>
+										<div className='flex gap-2 text-[8px] font-medium text-gray-400'>
+											{(['6M', '1Y', 'All'] as ('6M' | '1Y' | 'All')[]).map(range => (
+												<div key={range} className={clsx('rounded-md transition-all', range === '6M' && 'bg-white text-bluish-cyan font-semibold')}>
+													{range}
 												</div>
 											))}
 										</div>
+									</div>
+									<div className='mt-2 mr-4 ml-1 -mb-1.5 flex-1 text-[8px]'>
+										<LineChart data={lineChartData} strokeWidth={0.75} />
+									</div>
+								</div>
+								{/* Donut Chart */}
+								<div className='lg:col-span-1 p-2 bg-white rounded-md border border-gray-100 shadow-sm'>
+									<h2 className='text-[10px] font-semibold text-gray-800'>Category Breakdown</h2>
+									<div className='h-20 mb-4 text-[8px]'>
+										<PieChart data={donutChartData} />
+									</div>
+									<div className='grid grid-cols-2 gap-x-8 gap-y-1 text-gray-700 text-[8px] font-medium leading-2.75'>
+										{donutChartData.map((d, index) => (
+											<div key={index}>
+												<div className='flex items-center justify-between'>
+													<div><DynamicIcon name={icons[index] as IconName} width='10px' height='10px' strokeWidth='1.5' color={d.fill} fill={d.name === 'Other' ? d.fill : 'transparent'} /></div>
+													<div>{d.value}%</div>
+												</div>
+											<div>{d.name}</div>
+											</div>
+										))}
 									</div>
 								</div>
 							</div>
 						</div>
 					</div>
 				</div>
+			</div>
 
-			<div className='w-full pb-18 flex gap-2'>
+			<div className='relative w-full pb-18 flex gap-2'>
 				{features.map((el, index) => (
 					<div key={index} className='flex-1 h-20 p-3 flex items-center gap-2 bg-white border border-gray-200 rounded-sm'>
 						<div className='h-full aspect-square'>

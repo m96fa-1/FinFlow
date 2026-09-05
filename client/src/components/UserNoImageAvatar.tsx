@@ -1,5 +1,5 @@
-import type { User } from '../types/api'
 import clsx from 'clsx'
+import type { User } from '../types/api'
 
 export default function UserNoImageAvatar({ user, size }: { user: User; size: 'sm' | 'md' | 'lg'; }) {
 	return (

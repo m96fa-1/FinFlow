@@ -3,9 +3,9 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import UserNoImageAvatar from '../components/UserNoImageAvatar'
 import { LogoTitle } from '../components/Logos'
-import { LinkIcon, ArrowRightLeft, ChartLine, ChartPie, LayoutDashboard, Settings } from 'lucide-react'
+import { LinkIcon, ArrowRightLeft, ChartLine, ChartPie, LayoutDashboard, Settings, Layers } from 'lucide-react'
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({ children }: { children?: React.ReactNode }) {
 	return (
 		<>
 			<Header className='fixed top-0 left-0 right-0 py-2 flex items-center justify-between gap-4 bg-white border-b border-gray-300' />
@@ -93,13 +93,18 @@ const NavSection = ({ className }: { className: string }) => {
 					destination: '/dashboard',
 				},
 				{
+					name: 'Categories',
+					icon: <ChartPie width='20' height='20' strokeWidth='1.3' className='text-bluish-cyan' />,
+					destination: '/categories',
+				},
+				{
 					name: 'Transactions',
 					icon: <ArrowRightLeft width='20' height='20' strokeWidth='1.3' className='text-bluish-cyan' />,
 					destination: '/transactions',
 				},
 				{
 					name: 'Budgets',
-					icon: <ChartPie width='20' height='20' strokeWidth='1.3' className='text-bluish-cyan' />,
+					icon: <Layers width='20' height='20' strokeWidth='1.3' className='text-bluish-cyan' />,
 					destination: '/budgets',
 				},
 				{
@@ -133,7 +138,7 @@ const NavSection = ({ className }: { className: string }) => {
 					<h3 className='mt-4 mx-4 text-gray-500 text-xs'>{section.title}</h3>
 					<ul>
 						{section.items.map((item, index) => (
-							<li key={index}><Link to={item.destination} className={`${location.pathname === item.destination ? 'bg-gray-100' : ''} font-medium px-4 py-2.5 flex items-center gap-1 text-sm hover:bg-gray-100`}>
+							<li key={index}><Link to={item.destination} replace className={`${location.pathname === item.destination ? 'bg-gray-100' : ''} font-medium px-4 py-2.5 flex items-center gap-1 text-sm hover:bg-gray-100`}>
 								{item.icon}
 								<h4 className='text-gray-700 font-medium'>{item.name}</h4>
 							</Link></li>
