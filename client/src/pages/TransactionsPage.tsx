@@ -1,5 +1,6 @@
 import React from 'react'
 
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useTransactionsData } from '../hooks/useData'
 
 import DashboardLayout from '../layouts/DashboardLayout'
@@ -11,6 +12,7 @@ import { DynamicIcon, type IconName } from 'lucide-react/dynamic'
 type TimeRange = '1M' | '6M' | '1Y';
 
 export default function TransactionsPage() {
+	useDocumentTitle('Transactions');
 	const data = useTransactionsData();
 
 	const [timeRange, setTimeRange] = React.useState<TimeRange>('1M');
@@ -78,7 +80,7 @@ export default function TransactionsPage() {
 				<ContextPill />
 			</div>
 
-			<div className='p-4 pb-1 bg-white border border-gray-100 shadow-md rounded-lg'>
+			<div className='p-4 pb-1 bg-white border border-gray-100 rounded-xl shadow-md'>
 				<div className='flex items-center justify-between'>
 					<h2 className='text-gray-800 text-lg font-semibold'>Transactions List</h2>
 					<div className='flex gap-4 text-xs font-medium text-gray-400'>
@@ -104,7 +106,7 @@ export default function TransactionsPage() {
 								<DynamicIcon name={tx.category.icon ? tx.category.icon as IconName : 'box'} width='26px' height='26px' strokeWidth='1.5' color={tx.category.color || '#2b8dae'} />
 							</div>
 							<div className='shrink-0 ml-2'>
-								<p className='text-sm font-medium text-gray-900'>{tx.category.name}</p>
+								<p className='text-sm font-medium text-gray-800'>{tx.category.name}</p>
 								<p className='text-xs text-gray-400'>
 									{tx.category.type[0].toUpperCase() + tx.category.type.substring(1).toLowerCase()} • {getTransactionDate(tx.date)}
 								</p>

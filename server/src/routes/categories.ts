@@ -15,11 +15,11 @@ router.use(authenticateToken);
 // ==========================================
 router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 	try {
-		const { type, limit } = req.query;
-
 		if (!req.userId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });
 		}
+
+		const { type, limit } = req.query;
 
 		const parsedType = type === 'INCOME' || type === 'EXPENSE' ? type : undefined;
 		const parsedLimit = !Number.isNaN(parseInt(String(limit), 10)) ? parseInt(String(limit), 10) : undefined;
@@ -46,7 +46,6 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 
 		return res.json({
 			success: true,
-			count: categories.length,
 			data: categories,
 		});
 	} catch (error) {
@@ -61,11 +60,11 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 // ==========================================
 router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
 	try {
-		const { id } = req.params;
-
 		if (!req.userId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });
 		}
+
+		const { id } = req.params;
 
 		const category = await prisma.category.findFirst({
 			where: {
@@ -89,7 +88,10 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
 			return res.status(404).json({ success: false, message: 'Category not found' });
 		}
 
-		return res.json({ success: true, data: category });
+		return res.json({
+			success: true,
+			data: category,
+		});
 	} catch (error) {
 		console.error('Error fetching category: ', error);
 		return res.status(500).json({ success: false, message: 'Failed to fetch category' });
@@ -102,11 +104,11 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
 // ==========================================
 router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 	try {
-		const { name, icon, color, type } = req.body;
-
 		if (!req.userId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });
 		}
+
+		const { name, icon, color, type } = req.body;
 
 		if (!name) {
 			return res.status(400).json({
@@ -168,12 +170,12 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 // ==========================================
 router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 	try {
-		const { id } = req.params;
-		const { name, icon, color, type } = req.body;
-
 		if (!req.userId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });
 		}
+
+		const { id } = req.params;
+		const { name, icon, color, type } = req.body;
 
 		const existingCategory = await prisma.category.findFirst({
 			where: {
@@ -241,11 +243,11 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 // ==========================================
 router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
 	try {
-		const { id } = req.params;
-
 		if (!req.userId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });
 		}
+
+		const { id } = req.params;
 
 		const existingCategory = await prisma.category.findFirst({
 			where: {

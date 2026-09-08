@@ -1,10 +1,15 @@
 import { Routes, Route } from 'react-router-dom'
+
 import ProtectedRoute from './components/ProtectedRoute'
 import PageNotFound from './layouts/PageNotFound'
+
 import RootPage from './pages/RootPage'
+
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
+
 import DashboardPage from './pages/DashboardPage'
+import CategoriesPage from './pages/CategoriesPage'
 import TransactionsPage from './pages/TransactionsPage'
 import BudgetsPage from './pages/BudgetsPage'
 
@@ -19,6 +24,7 @@ export default function App() {
 			{/* Protected Routes (Requires JWT Authentication) */}
 			<Route element={<ProtectedRoute />}>
 				<Route path='/dashboard' element={<DashboardPage />} />
+				<Route path='/categories' element={<CategoriesPage />} />
 				<Route path='/transactions' element={<TransactionsPage />} />
 				<Route path='/budgets' element={<BudgetsPage />} />
 			</Route>

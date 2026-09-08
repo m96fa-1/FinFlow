@@ -1,6 +1,6 @@
 import { Router, Response } from 'express'
 import { prisma } from '../lib/prisma'
-import { $Enums } from '@prisma/client'
+import { Prisma, $Enums } from '@prisma/client'
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth'
 
 const router = Router();
@@ -15,61 +15,84 @@ router.use(authenticateToken);
 // ==========================================
 router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 	try {
-		const { month, year } = req.query;
-
 		if (!req.userId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });
 		}
 
-		const now = new Date();
-		const selectedMonth = month ? parseInt(String(month), 10) : now.getUTCMonth() + 1;
-		const selectedYear = year ? parseInt(String(year), 10) : now.getUTCFullYear();
+		const { month, year } = req.query;
 
-		const startOfMonth = new Date(selectedYear, selectedMonth - 1, 1);
-		const endOfMonth = new Date(selectedYear, selectedMonth, 0, 23, 59, 59, 999);
+		const budgetWhere: Prisma.BudgetWhereInput = {
+			userId: req.userId,
+		};
+
+		if (month) budgetWhere.month = parseInt(String(month), 10);
+		if (year) budgetWhere.year = parseInt(String(year), 10);
 
 		const budgets = await prisma.budget.findMany({
-			where: {
-				userId: req.userId,
-				month: selectedMonth,
-				year: selectedYear,
-			},
+			where: budgetWhere,
 			include: {
 				category: true,
 			},
 		});
 
-		const expenseAggregates = await prisma.transaction.groupBy({
-			by: ['categoryId'],
-			_sum: { amount: true },
-			where: {
-				userId: req.userId,
-				categoryId: { in: budgets.map(b => b.categoryId) },
-				date: { gte: startOfMonth, lte: endOfMonth },
-				category: {
-					type: 'EXPENSE',
-				},
-			},
-		});
+		if (budgets.length === 0) {
+			return res.json({ success: true, count: 0, data: [] });
+		}
 
-		const spentMap = new Map(
-			expenseAggregates.map(item => [item.categoryId, item._sum.amount ?? 0])
+		const periodGroups = new Map<string, { year: number; month: number; categoryIds: string[] }>();
+
+		for (const budget of budgets) {
+			const periodKey = `${budget.year}-${budget.month}`;
+
+			if (!periodGroups.has(periodKey)) {
+				periodGroups.set(periodKey, { year: budget.year, month: budget.month, categoryIds: [] });
+			}
+			periodGroups.get(periodKey)!.categoryIds.push(budget.categoryId);
+		}
+
+		const spentMap = new Map<string, number>();
+
+		await Promise.all(
+			Array.from(periodGroups.values()).map(
+				async ({ year: pYear, month: pMonth, categoryIds }) => {
+					const startOfMonth = new Date(Date.UTC(pYear, pMonth - 1, 1, 0, 0, 0, 0));
+					const endOfMonth = new Date(Date.UTC(pYear, pMonth, 0, 23, 59, 59, 999));
+
+					const aggregates = await prisma.transaction.groupBy({
+						by: ['categoryId'],
+						_sum: { amount: true },
+						where: {
+							userId: req.userId,
+							categoryId: { in: categoryIds },
+							date: { gte: startOfMonth, lte: endOfMonth },
+							category: { type: 'EXPENSE' },
+						},
+					});
+
+					for (const item of aggregates) {
+						const mapKey = `${pYear}-${pMonth}-${item.categoryId}`;
+						spentMap.set(mapKey, item._sum.amount ?? 0);
+					}
+				}
+			)
 		);
 
-		const budgetsWithSpent = budgets.map((budget) => {
-			const spentAmount = spentMap.get(budget.categoryId) ?? 0;
+		const budgetsWithSpent = budgets.map(budget => {
+			const mapKey = `${budget.year}-${budget.month}-${budget.categoryId}`;
+			const spentAmount = spentMap.get(mapKey) ?? 0;
+			const limitAmount = budget.limitAmount;
+
 			return {
 				...budget,
+				limitAmount,
 				spentAmount,
-				remainingAmount: budget.limitAmount - spentAmount,
-				isOverBudget: spentAmount > budget.limitAmount,
+				remainingAmount: Math.max(0, limitAmount - spentAmount),
+				isOverBudget: spentAmount > limitAmount,
 			};
 		});
 
 		return res.json({
 			success: true,
-			period: { month: selectedMonth, year: selectedYear },
-			count: budgetsWithSpent.length,
 			data: budgetsWithSpent,
 		});
 	} catch (error) {
@@ -84,11 +107,11 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 // ==========================================
 router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
 	try {
-		const { id } = req.params;
-
 		if (!req.userId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });
 		}
+
+		const { id } = req.params;
 
 		const budget = await prisma.budget.findFirst({
 			where: {
@@ -117,11 +140,11 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
 // ==========================================
 router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 	try {
-		const { categoryId, limitAmount, period, month, year } = req.body;
-
 		if (!req.userId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });
 		}
+
+		const { categoryId, limitAmount, period, month, year } = req.body;
 
 		if (!categoryId || limitAmount === undefined || month === undefined || year === undefined) {
 			return res.status(400).json({
@@ -185,12 +208,12 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 // ==========================================
 router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 	try {
-		const { id } = req.params;
-		const { categoryId, limitAmount, period, month, year } = req.body;
-
 		if (!req.userId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });
 		}
+
+		const { id } = req.params;
+		const { categoryId, limitAmount, period, month, year } = req.body;
 
 		if (categoryId) {
 			const targetCategory = await prisma.category.findFirst({
@@ -262,11 +285,11 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 // ==========================================
 router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
 	try {
-		const { id } = req.params;
-
 		if (!req.userId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });
 		}
+
+		const { id } = req.params;
 
 		const existingBudget = await prisma.budget.findFirst({
 			where: { id: String(id), userId: req.userId },

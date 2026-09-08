@@ -133,12 +133,12 @@ const NavSection = ({ className }: { className: string }) => {
 
 	return (
 		<nav className={className}>
-			{navElements.map((section, index) => (
-				<div key={index}>
+			{navElements.map(section => (
+				<div key={section.title}>
 					<h3 className='mt-4 mx-4 text-gray-500 text-xs'>{section.title}</h3>
 					<ul>
-						{section.items.map((item, index) => (
-							<li key={index}><Link to={item.destination} replace className={`${location.pathname === item.destination ? 'bg-gray-100' : ''} font-medium px-4 py-2.5 flex items-center gap-1 text-sm hover:bg-gray-100`}>
+						{section.items.map(item => (
+							<li key={item.name}><Link to={item.destination} replace className={`${location.pathname === item.destination ? 'bg-gray-100' : ''} font-medium px-4 py-2.5 flex items-center gap-1 text-sm hover:bg-gray-100`}>
 								{item.icon}
 								<h4 className='text-gray-700 font-medium'>{item.name}</h4>
 							</Link></li>

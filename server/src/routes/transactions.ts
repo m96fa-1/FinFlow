@@ -1,5 +1,6 @@
 import { Router, Response } from 'express'
 import { prisma } from '../lib/prisma'
+import { Prisma } from '@prisma/client'
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth'
 
 const router = Router();
@@ -14,17 +15,17 @@ router.use(authenticateToken);
 // ==========================================
 router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 	try {
-		const { category, type, limit } = req.query;
-
 		if (!req.userId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });
 		}
+
+		const { category, type, limit } = req.query;
 
 		const parsedCategory = category ? String(category) : undefined;
 		const parsedType = type === 'INCOME' || type === 'EXPENSE' ? type : undefined;
 		const parsedLimit = !Number.isNaN(parseInt(String(limit), 10)) ? parseInt(String(limit), 10) : undefined;
 
-		const whereCondition: any = {
+		const transactionWhere: Prisma.TransactionWhereInput = {
 			userId: req.userId,
 			...(parsedType ? { category: { type: parsedType } } : {}),
 		};
@@ -40,11 +41,11 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 				return res.status(404).json({ success: false, message: `Category ${parsedCategory} was not found` });
 			}
 
-			whereCondition.categoryId = fetchedCategory.id;
+			transactionWhere.categoryId = fetchedCategory.id;
 		}
 
 		const transactions = await prisma.transaction.findMany({
-			where: whereCondition,
+			where: transactionWhere,
 			take: parsedLimit,
 			include: { category: true },
 			orderBy: { date: 'desc' },
@@ -52,7 +53,6 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 
 		return res.json({
 			success: true,
-			count: transactions.length,
 			data: transactions,
 		});
 	} catch (error) {
@@ -67,11 +67,11 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
 // ==========================================
 router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
 	try {
-		const { id } = req.params;
-
 		if (!req.userId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });
 		}
+
+		const { id } = req.params;
 
 		const transaction = await prisma.transaction.findFirst({
 			where: {
@@ -87,7 +87,10 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
 			return res.status(404).json({ success: false, message: 'Transaction not found' });
 		}
 
-		return res.json({ success: true, data: transaction });
+		return res.json({
+			success: true,
+			data: transaction,
+		});
 	} catch (error) {
 		console.error('Error fetching transaction: ', error);
 		return res.status(500).json({ success: false, message: 'Failed to fetch transaction' });
@@ -100,11 +103,11 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
 // ==========================================
 router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 	try {
-		const { categoryId, amount, date, description } = req.body;
-
 		if (!req.userId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });
 		}
+
+		const { categoryId, amount, date, description } = req.body;
 
 		if (!categoryId || amount === undefined) {
 			return res.status(400).json({
@@ -159,13 +162,13 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 // ==========================================
 router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 	try {
-		const { id } = req.params;
-		const { categoryId, amount, date, description } = req.body;
-
 		if (!req.userId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });
 		}
-		
+
+		const { id } = req.params;
+		const { categoryId, amount, date, description } = req.body;
+
 		if (categoryId) {
 			const targetCategory = await prisma.category.findFirst({
 				where: {
@@ -227,11 +230,11 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 // ==========================================
 router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
 	try {
-		const { id } = req.params;
-
 		if (!req.userId) {
 			return res.status(401).json({ success: false, message: 'Unauthorized' });
 		}
+
+		const { id } = req.params;
 
 		const existingTransaction = await prisma.transaction.findFirst({
 			where: {

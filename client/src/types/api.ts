@@ -41,7 +41,7 @@ export interface Budget {
 	createdAt:					string;
 
 	category:						Category;
-	
+
 	spentAmount?:				number;
 	remainingAmount?:		number;
 	isOverBudget?:			boolean;
@@ -74,11 +74,4 @@ export interface ApiResponse<T> {
 export interface DeleteResponse {
 	success:						boolean;
 	message:						string;
-}
-
-export interface BudgetPaginatedResponse {
-	success:						boolean;
-	period:							{ month: number; year: number };
-	count:							number;
-	data:								Budget[];
 }

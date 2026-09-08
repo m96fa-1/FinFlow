@@ -1,6 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useDashboardData, type DashboardData } from '../hooks/useData'
 import type { Transaction, Budget } from '../types/api'
 
@@ -13,6 +14,7 @@ import { BanknoteArrowDown, Layers, Landmark, PiggyBank } from 'lucide-react'
 import { DynamicIcon, type IconName } from 'lucide-react/dynamic'
 
 export default function DashboardPage() {
+	useDocumentTitle('Dashboard');
 	const data = useDashboardData();
 
 	if (data.loading) {
@@ -168,8 +170,8 @@ const KeyMetricsSummary = ({ data }: { data: DashboardData; }) => {
 
 	return (
 		<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
-			{metrics.map((metric, index) => (
-				<div key={index} className='rounded-xl shadow-sm transition-shadow hover:shadow-md'>
+			{metrics.map(metric => (
+				<div key={metric.title} className='rounded-xl shadow-sm transition-shadow hover:shadow-md'>
 					<div className='bg-white p-4 rounded-t-xl border-x border-t border-gray-100'>
 						<div className='flex items-center justify-between mb-2'>
 							<span className='text-sm font-medium text-gray-500'>{metric.title}</span>
@@ -345,7 +347,7 @@ const CategoryBreakdown = ({ transactions }: { transactions: Transaction[] }) =>
 			</div>
 			<div className='grid grid-cols-2 gap-x-16 gap-y-3 text-sm'>
 				{data.map((d, index) => (
-					<div key={index} className='text-gray-700 font-medium'>
+					<div key={d.name} className='text-gray-700 font-medium'>
 						<div className='flex items-center justify-between'>
 							<div><DynamicIcon name={icons[index] as IconName} width='22px' height='22px' strokeWidth='1.5' color={d.fill} fill={d.name === 'Other' ? d.fill : 'transparent'} /></div>
 							<div>{d.value}%</div>
@@ -381,7 +383,7 @@ const RecentTransactions = ({ transactions }: { transactions: Transaction[] }) =
 
 	return (
 		<div className='lg:col-span-2 p-6 bg-white border border-gray-100 rounded-xl shadow-sm'>
-			<div className='flex items-center justify-between mb-4'>
+			<div className='mb-2 flex items-center justify-between'>
 				<h2 className='text-lg font-semibold text-gray-800'>Recent Transactions</h2>
 				<Link to='/transactions' className='text-xs font-semibold text-emerald-600 hover:underline'>
 					View All
@@ -396,7 +398,7 @@ const RecentTransactions = ({ transactions }: { transactions: Transaction[] }) =
 								<DynamicIcon name={tx.category.icon ? tx.category.icon as IconName : 'box'} width='26px' height='26px' strokeWidth='1.5' color={tx.category.color || '#2b8dae'} />
 							</div>
 							<div>
-								<p className='text-sm font-medium text-gray-900'>{tx.category.name}</p>
+								<p className='text-sm font-medium text-gray-800'>{tx.category.name}</p>
 								<p className='text-xs text-gray-400'>
 									{tx.category.type[0].toUpperCase() + tx.category.type.substring(1).toLowerCase()} • {getTransactionDate(tx.date)}
 								</p>
@@ -436,7 +438,7 @@ const TopBudgets = ({ budgets }: { budgets: Budget[] }) => {
 								</span>
 						</div>
 						<div className='w-full h-2.5 bg-bluish-cyan/15 border border-navy-blue/30 rounded-full'>
-							<div style={{ width: `${budget.isOverBudget! ? '100' : (budget.spentAmount! / budget.limitAmount * 100).toFixed()}%`, backgroundColor: budget.isOverBudget! ? 'var(--color-red-400)' : budget.category.color || '#2b8dae' }} className='h-[8.4px] rounded-full' />
+							<div style={{ width: `${budget.isOverBudget! ? '100' : (budget.spentAmount! / budget.limitAmount * 100).toFixed()}%`, backgroundColor: budget.category.color || '#2b8dae' }} className='h-[8.4px] rounded-full' />
 						</div>
 					</div>
 				)) : (

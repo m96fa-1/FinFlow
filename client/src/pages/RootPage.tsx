@@ -134,6 +134,7 @@ const TopSection = () => {
 								<div className='p-1 bg-bluish-cyan rounded-[22.5%]'><LayoutDashboard width={12} height={12} strokeWidth={2} color='white' /></div>
 								<div className='p-1'><ChartPie width={12} height={12} strokeWidth={2} color='var(--color-gray-500)' /></div>
 								<div className='p-1'><ArrowRightLeft width={12} height={12} strokeWidth={2} color='var(--color-gray-500)' /></div>
+								<div className='p-1'><Layers width={12} height={12} strokeWidth={2} color='var(--color-gray-500)' /></div>
 								<div className='p-1'><ChartLine width={12} height={12} strokeWidth={2} color='var(--color-gray-500)' /></div>
 							</div>
 							<div className='mt-1 p-1'><LogOut width={12} height={12} strokeWidth={2} color='var(--color-gray-500)' /></div>
@@ -148,8 +149,8 @@ const TopSection = () => {
 							</div>
 							{/* Metrics */}
 							<div className='mt-2 flex gap-3'>
-								{metrics.map((metric, index) => (
-									<div key={index} className='flex-1 rounded-md shadow-sm'>
+								{metrics.map(metric => (
+									<div key={metric.title} className='flex-1 rounded-md shadow-sm'>
 										<div className='p-1.5 bg-white rounded-t-md border-x border-t border-gray-100'>
 											<div className='flex items-center justify-between'>
 												<span className='text-[9px] font-medium text-gray-500'>{metric.title}</span>
@@ -192,7 +193,7 @@ const TopSection = () => {
 									</div>
 									<div className='grid grid-cols-2 gap-x-8 gap-y-1 text-gray-700 text-[8px] font-medium leading-2.75'>
 										{donutChartData.map((d, index) => (
-											<div key={index}>
+											<div key={d.name}>
 												<div className='flex items-center justify-between'>
 													<div><DynamicIcon name={icons[index] as IconName} width='10px' height='10px' strokeWidth='1.5' color={d.fill} fill={d.name === 'Other' ? d.fill : 'transparent'} /></div>
 													<div>{d.value}%</div>
@@ -209,8 +210,8 @@ const TopSection = () => {
 			</div>
 
 			<div className='relative w-full pb-18 flex gap-2'>
-				{features.map((el, index) => (
-					<div key={index} className='flex-1 h-20 p-3 flex items-center gap-2 bg-white border border-gray-200 rounded-sm'>
+				{features.map(el => (
+					<div key={el.title} className='flex-1 h-20 p-3 flex items-center gap-2 bg-white border border-gray-200 rounded-sm'>
 						<div className='h-full aspect-square'>
 							{el.icon}
 						</div>

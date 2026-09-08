@@ -1,5 +1,5 @@
 import { apiClient } from './client'
-import type { Budget, ApiResponse, BudgetPaginatedResponse, DeleteResponse } from '../types/api'
+import type { Budget, ApiResponse, PaginatedResponse, DeleteResponse } from '../types/api'
 
 export interface CreateBudgetInput {
 	category: string;
@@ -11,7 +11,7 @@ export interface CreateBudgetInput {
 
 export const budgetsApi = {
 	getAll: async (params?: { month?: number; year?: number }) => {
-		const response = await apiClient.get<BudgetPaginatedResponse>('/budgets', { params });
+		const response = await apiClient.get<PaginatedResponse<Budget>>('/budgets', { params });
 		return response.data;
 	},
 
