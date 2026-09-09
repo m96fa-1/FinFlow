@@ -2,7 +2,7 @@ import { apiClient } from './client'
 import type { Budget, ApiResponse, PaginatedResponse, DeleteResponse } from '../types/api'
 
 export interface CreateBudgetInput {
-	category: string;
+	categoryId: string;
 	limitAmount: number;
 	period?: string;
 	month: number;

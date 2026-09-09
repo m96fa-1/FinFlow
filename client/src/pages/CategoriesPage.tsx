@@ -1,10 +1,11 @@
 import React from 'react'
+import { Outlet } from 'react-router-dom'
 
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useCategoriesData } from '../hooks/useData'
 
 import DashboardLayout from '../layouts/DashboardLayout'
-import NewCategoryButton from '../components/NewCategoryButton'
+import CreateCategoryButton from '../components/CreateCategoryButton'
 import ContextPill from '../components/ContextPill'
 
 import { SquarePen } from 'lucide-react'
@@ -29,7 +30,7 @@ export default function CategoriesPage() {
 	return (
 		<DashboardLayout>
 			<div className='flex items-center justify-between'>
-				<NewCategoryButton />
+				<CreateCategoryButton />
 				<ContextPill />
 			</div>
 
@@ -52,6 +53,9 @@ export default function CategoriesPage() {
 					<div>Empty</div>
 				)}
 			</div>
+			
+			{/* Renders child routes (e.g. /transactions/new) as an overlay */}
+			<Outlet />
 		</DashboardLayout>
 	);
 }

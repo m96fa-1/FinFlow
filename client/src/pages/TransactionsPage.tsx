@@ -1,4 +1,5 @@
 import React from 'react'
+import { Outlet } from 'react-router-dom'
 
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useTransactionsData } from '../hooks/useData'
@@ -123,6 +124,9 @@ export default function TransactionsPage() {
 					<div>Empty</div>
 				)}
 			</div>
+
+			{/* Renders child routes (e.g. /transactions/new) as an overlay */}
+			<Outlet />
 		</DashboardLayout>
 	);
 }
