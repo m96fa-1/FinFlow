@@ -2,6 +2,7 @@ import { Router, Response } from 'express'
 import { prisma } from '../lib/prisma'
 import { $Enums } from '@prisma/client'
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth'
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 
 const router = Router();
 
@@ -156,7 +157,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
 			data: newCategory,
 		});
 	} catch (error: any) {
-		if (error.code === 'P2002') {
+		if (error.errorCode === 'P2002') {
 			return res.status(409).json({ success: false, message: 'A category with this name already exists' });
 		}
 		console.error('Error creating category: ', error);
@@ -229,7 +230,7 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 			data: updatedCategory,
 		});
 	} catch (error: any) {
-		if (error.code === 'P2002') {
+		if (error.errorCode === 'P2002') {
 			return res.status(409).json({ success: false, message: 'A category with this name already exists' });
 		}
 		console.error('Error updating category: ', error);
@@ -269,7 +270,7 @@ router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
 			message: 'Category deleted successfully',
 		});
 	} catch (error: any) {
-		if (error.code === 'P2003') {
+		if (error.code === 'P2039') {
 			return res.status(400).json({
 				success: false,
 				message: 'Cannot delete category because it has linked transactions. Reassign transactions first.',

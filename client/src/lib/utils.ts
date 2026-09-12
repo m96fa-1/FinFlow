@@ -1,3 +1,22 @@
+export function capitalizeString(str: string) {
+	return str.replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+export function stringToSlug(str: string) {
+	return str
+		.toLowerCase()
+		.trim()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/(^-|-$)/g, '');
+}
+
+export function slugToString(slug: string) {
+	return slug
+		.replace(/^\/+|\/+$/g, '')
+		.replace(/[-_]+/g, ' ')
+		.replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 export function validateFullName(name: string) {
 	return name.match(
 		/^[\p{L}]([-']?[\p{L}]+)*( [\p{L}]([-']?[\p{L}]+)*)+$/iu

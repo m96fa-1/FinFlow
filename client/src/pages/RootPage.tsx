@@ -156,7 +156,7 @@ const TopSection = () => {
 												<span className='text-[9px] font-medium text-gray-500'>{metric.title}</span>
 												<div>{metric.lucideElement}</div>
 											</div>
-											<div className='text-[13px] font-bold text-gray-900'>{metric.amount}</div>
+											<div className='text-[13px] font-bold text-gray-800'>{metric.amount}</div>
 											<div className='text-[8px] text-gray-600 font-medium'>
 												<span className={metric.changeStatus === 'positive' ? 'text-emerald-600' : metric.changeStatus === 'negative' ? 'text-red-500' : 'text-black'}>
 													{metric.changeValue}

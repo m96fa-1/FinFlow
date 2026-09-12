@@ -2,7 +2,7 @@ import React from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 
 import clsx from 'clsx'
-import { validateFullName, validateEmail, validatePassword } from '../lib/utils'
+import { capitalizeString, validateFullName, validateEmail, validatePassword } from '../lib/utils'
 import { useAuth } from '../context/AuthContext'
 
 import { LogoTitle } from '../components/Logos'
@@ -80,7 +80,7 @@ export default function RegisterPage() {
 			(password !== passwordRepeat)
 		) return;
 
-		const fullNameCapitalized = fullName.replace(/\b\w/g, (char) => char.toUpperCase());
+		const fullNameCapitalized = capitalizeString(fullName);
 		const emailLowercased = email.toLowerCase();
 
 		try {

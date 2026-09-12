@@ -1,23 +1,19 @@
 import { useLocation } from 'react-router-dom'
 
+import { slugToString } from '../lib/utils'
+
 import { CalendarDays } from 'lucide-react'
 
 export default function ContextPill() {
 	const location = useLocation();
 
-	// Getting page name from URL
-	const currentPage = location.pathname
-		.replace(/^\/+|\/+$/g, '')
-		.replace(/[-_]+/g, ' ')
-		.replace(/\b\w/g, (char) => char.toUpperCase());
+	const currentPage = slugToString(location.pathname);
 
-	// Formatted Month
 	const currentMonth = new Date().toLocaleDateString('en-US', {
 		month: 'long',
 		year: 'numeric',
 	});
 
-	// Account Name
 	const accountName = 'Personal Acc.';
 
 	return (

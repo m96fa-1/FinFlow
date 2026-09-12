@@ -1,21 +1,22 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useDashboardData, type DashboardData } from '../hooks/useData'
 import type { Transaction, Budget } from '../types/api'
 
 import DashboardLayout from '../layouts/DashboardLayout'
-import AddTransactionButton from '../components/AddTransactionButton'
 import ContextPill from '../components/ContextPill'
 import { LineChart, PieChart } from '../components/Charts'
 
-import { BanknoteArrowDown, Layers, Landmark, PiggyBank } from 'lucide-react'
+import { BanknoteArrowDown, Layers, Landmark, PiggyBank, Plus } from 'lucide-react'
 import { DynamicIcon, type IconName } from 'lucide-react/dynamic'
 
 export default function DashboardPage() {
 	useDocumentTitle('Dashboard');
 	const data = useDashboardData();
+
+	const navigate = useNavigate();
 
 	if (data.loading) {
 		return (
@@ -30,7 +31,10 @@ export default function DashboardPage() {
 	return (
 		<DashboardLayout>
 			<div className='flex items-center justify-between'>
-				<AddTransactionButton />
+				<button onClick={() => { navigate('/transactions?action=add'); }} className='flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow transition-colors duration-150'>
+					<Plus size='16' strokeWidth='2.5' />
+					<span className='ml-1'>Add Transaction</span>
+				</button>
 				<ContextPill />
 			</div>
 
@@ -177,7 +181,7 @@ const KeyMetricsSummary = ({ data }: { data: DashboardData; }) => {
 							<span className='text-sm font-medium text-gray-500'>{metric.title}</span>
 							{metric.lucideElement}
 						</div>
-						<div className='text-2xl font-bold text-gray-900'>{metric.amount}</div>
+						<div className='text-2xl font-bold text-gray-800'>{metric.amount}</div>
 						<div className='text-xs mt-2 text-gray-600 font-medium'>
 							<span className={metric.changeStatus === 'positive' ? 'text-emerald-600' : metric.changeStatus === 'negative' ? 'text-red-500' : 'text-black'}>
 								{metric.changeValue}

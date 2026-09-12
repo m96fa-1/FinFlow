@@ -1,13 +1,16 @@
 import React from 'react'
-import { Outlet } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useTransactionsData } from '../hooks/useData'
+import { transactionsApi } from '../api/transactions'
+import type { Transaction } from '../types/api'
 
 import DashboardLayout from '../layouts/DashboardLayout'
-import AddTransactionButton from '../components/AddTransactionButton'
 import ContextPill from '../components/ContextPill'
+import AddTransactionModal, { type AddTransactionOnConfirmProps } from '../components/AddTransactionModal'
 
+import { Plus } from 'lucide-react'
 import { DynamicIcon, type IconName } from 'lucide-react/dynamic'
 
 type TimeRange = '1M' | '6M' | '1Y';
@@ -16,11 +19,22 @@ export default function TransactionsPage() {
 	useDocumentTitle('Transactions');
 	const data = useTransactionsData();
 
-	const [timeRange, setTimeRange] = React.useState<TimeRange>('1M');
+	const [searchParams] = useSearchParams();
 
-	const transactions = React.useMemo(() => {
+	const [transactions, setTransactions] = React.useState<Transaction[]>([]);
+	const [timeRange, setTimeRange] = React.useState<TimeRange>('1M');
+	const [addModalOpen, setAddModalOpen] = React.useState<boolean>(false);
+
+	React.useEffect(() => {
+		if (searchParams.get('action') === 'add') {
+			setAddModalOpen(true);
+		}
+	}, [searchParams]);
+
+	React.useEffect(() => {
 		if (data.transactions.length === 0) {
-			return data.transactions;
+			setTransactions(data.transactions);
+			return;
 		}
 
 		const now = new Date();
@@ -43,8 +57,8 @@ export default function TransactionsPage() {
 			return txTimestamp < cutoffTimestamp;
 		});
 
-		return cutoffIndex === -1 ? data.transactions : data.transactions.slice(0, cutoffIndex);
-	}, [data.transactions, timeRange]);
+		setTransactions(cutoffIndex === -1 ? data.transactions : data.transactions.slice(0, cutoffIndex));
+	}, [data, timeRange]);
 
 	const getTransactionDate = (d: string | number | Date): string => {
 		const now = new Date();
@@ -67,8 +81,28 @@ export default function TransactionsPage() {
 	if (data.loading) {
 		return (
 			<DashboardLayout>
-				<div className='h-full flex items-center justify-center'>
-					<div className='loading-circle' />
+				<div className='py-4 flex items-center justify-between animate-pulse'>
+					<div className='w-40 h-2 rounded bg-gray-300' />
+					<div className='w-90 h-2 rounded bg-gray-300' />
+				</div>
+
+				<div className='space-y-8 mt-8 p-4 bg-white border border-gray-100 rounded-xl shadow-md'>
+					<div className='w-50 h-2 mt-4 mb-8 rounded bg-gray-300 animate-pulse' />
+					{[1, 2, 3, 4, 5, 6, 7].map(item => (
+						<div key={item} className='flex items-center justify-between animate-pulse'>
+							<div className='flex items-center'>
+								<div className='size-8 rounded-full bg-gray-300' />
+								<div className='ml-2'>
+									<div className='w-50 h-2 rounded bg-gray-300' />
+									<div className='w-10 h-2 mt-3 rounded bg-gray-300' />
+								</div>
+							</div>
+							<div className='flex items-center gap-1'>
+								<div className='size-4 rounded-full bg-gray-300' />
+								<div className='size-4 rounded-full bg-gray-300' />
+							</div>
+						</div>
+					))}
 				</div>
 			</DashboardLayout>
 		);
@@ -77,11 +111,14 @@ export default function TransactionsPage() {
 	return (
 		<DashboardLayout>
 			<div className='flex items-center justify-between'>
-				<AddTransactionButton />
+				<button onClick={() => { setAddModalOpen(true); }} className='flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow transition-colors duration-150'>
+					<Plus size='16' strokeWidth='2.5' />
+					<span className='ml-1'>Add Transaction</span>
+				</button>
 				<ContextPill />
 			</div>
 
-			<div className='p-4 pb-1 bg-white border border-gray-100 rounded-xl shadow-md'>
+			<div className='space-y-5 p-4 bg-white border border-gray-100 rounded-xl shadow-md'>
 				<div className='flex items-center justify-between'>
 					<h2 className='text-gray-800 text-lg font-semibold'>Transactions List</h2>
 					<div className='flex gap-4 text-xs font-medium text-gray-400'>
@@ -101,8 +138,8 @@ export default function TransactionsPage() {
 					</div>
 				</div>
 				{transactions.length > 0 ? transactions.map(tx => (
-					<div key={tx.id} className='py-3 flex items-center'>
-						<div className='flex-1 flex items-center'>
+					<div key={tx.id} className='flex items-center justify-between'>
+						<div className='flex items-center'>
 							<div>
 								<DynamicIcon name={tx.category.icon ? tx.category.icon as IconName : 'box'} width='26px' height='26px' strokeWidth='1.5' color={tx.category.color || '#2b8dae'} />
 							</div>
@@ -125,8 +162,15 @@ export default function TransactionsPage() {
 				)}
 			</div>
 
-			{/* Renders child routes (e.g. /transactions/new) as an overlay */}
-			<Outlet />
+			<AddTransactionModal
+				isOpen={addModalOpen}
+				onConfirm={async (data: AddTransactionOnConfirmProps) => {
+					const res = await transactionsApi.create(data);
+					setTransactions(prev => [res.data, ...prev]);
+					setAddModalOpen(false);
+				}}
+				onClose={() => { setAddModalOpen(false); }}
+			/>
 		</DashboardLayout>
 	);
 }

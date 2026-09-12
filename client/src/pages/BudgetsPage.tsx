@@ -1,12 +1,14 @@
 import React from 'react'
-import { Outlet } from 'react-router-dom'
 
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useBudgetsData } from '../hooks/useData'
+import { budgetsApi, type CreateBudgetInput } from '../api/budgets'
+import type { Budget } from '../types/api'
 
 import DashboardLayout from '../layouts/DashboardLayout'
-import NewBudgetButton from '../components/NewBudgetButton'
 import ContextPill from '../components/ContextPill'
+import NewBudgetModal from '../components/NewBudgetModal'
+import ConfirmDialog from '../components/ConfirmDialog'
 
 import { SquarePen, Trash2 } from 'lucide-react'
 import { DynamicIcon, type IconName } from 'lucide-react/dynamic'
@@ -15,7 +17,33 @@ export default function BudgetsPage() {
 	useDocumentTitle('Budgets');
 	const data = useBudgetsData();
 
-	const budgets = React.useMemo(() => data.budgets, [data.budgets]);
+	const [budgets, setBudgets] = React.useState<Budget[]>([]);
+	const [newBudgetModalOpen, setNewBudgetModalOpen] = React.useState<boolean>(false);
+	const [budgetToDelete, setBudgetToDelete] = React.useState<Budget | null>(null);
+	const [isDeleting, setIsDeleting] = React.useState<boolean>(false);
+	const [deleteErrorMessage, setDeleteErrorMessage] = React.useState<string | undefined>(undefined);
+	
+	React.useEffect(() => {
+		setBudgets(data.budgets);
+	}, [data]);
+
+	const handleDeleteConfirm = async () => {
+			if (!budgetToDelete) return;
+	
+			setIsDeleting(true);
+	
+			try {
+				await budgetsApi.delete(budgetToDelete.id);
+	
+				setBudgets((prev) => prev.filter(bud => bud.id !== budgetToDelete.id));
+				setBudgetToDelete(null);
+			} catch (error: any) {
+				setDeleteErrorMessage(String(error.response.data.message));
+				console.error('Delete error: ', error.response.data.message);
+			} finally {
+				setIsDeleting(false);
+			}
+		};
 
 	if (data.loading) {
 		return (
@@ -30,7 +58,9 @@ export default function BudgetsPage() {
 	return (
 		<DashboardLayout>
 			<div className='flex items-center justify-between'>
-				<NewBudgetButton />
+				<button onClick={() => { setNewBudgetModalOpen(true); }} className='flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow transition-colors duration-150'>
+					New Budget
+				</button>
 				<ContextPill />
 			</div>
 
@@ -39,8 +69,8 @@ export default function BudgetsPage() {
 					<thead>
 						<tr className='text-gray-400 text-sm'>
 							<th scope='col' className='px-2 py-1 border-b border-r border-gray-400 font-normal'>Category</th>
-							<th scope='col' className='px-2 py-1 border-b border-r border-gray-400 font-normal'>Starts</th>
-							<th scope='col' className='px-2 py-1 border-b border-r border-gray-400 font-normal'>Ends</th>
+							<th scope='col' className='px-2 py-1 border-b border-r border-gray-400 font-normal'>Starting Date</th>
+							<th scope='col' className='px-2 py-1 border-b border-r border-gray-400 font-normal'>Period</th>
 							<th scope='col' className='px-2 py-1 border-b border-r border-gray-400 font-normal'>Usage Bar</th>
 							<th scope='col' className='px-2 py-1 border-b border-r border-gray-400 font-normal'>Spent Amount</th>
 							<th scope='col' className='px-2 py-1 border-b border-r border-gray-400 font-normal'>Limit Amount</th>
@@ -48,7 +78,7 @@ export default function BudgetsPage() {
 						</tr>
 					</thead>
 					<tbody className='text-gray-700'>
-						{budgets.length > 0 ? budgets.map(budget => (
+						{budgets.map(budget => (
 							<tr key={budget.id}>
 								<td className='p-2 border-r border-gray-400'>
 									<h4 className='flex items-center gap-1'>
@@ -57,14 +87,10 @@ export default function BudgetsPage() {
 									</h4>
 								</td>
 								<td className='p-2 border-r border-gray-400'>
-									{budget.year}-{String(budget.month).padStart(2, '0')}-{'01'}
+									{new Date(budget.year, budget.month - 1).toLocaleDateString('en-US', { year: 'numeric', month: 'short' })}
 								</td>
 								<td className='p-2 border-r border-gray-400'>
-									{budget.period === 'MONTHLY' ? (
-										`${budget.year}-${String(budget.month).padStart(2, '0')}-${new Date(budget.year, budget.month, 0).getDate()}`
-									) : (
-										`${budget.year + 1}-${String(budget.month).padStart(2, '0')}-01`
-									)}
+									{budget.period === 'MONTHLY' ? 'Monthly' : 'Yearly'}
 								</td>
 								<td className='w-120 py-2 border-r border-gray-400'>
 									<div className='mx-4 h-2.5 bg-bluish-cyan/15 border border-navy-blue/30 rounded-full'>
@@ -78,19 +104,42 @@ export default function BudgetsPage() {
 									${budget.limitAmount.toLocaleString('en-US', { maximumFractionDigits: 2 })}
 								</td>
 								<td className='p-2 flex items-center gap-1'>
-									<button className='-mb-px text-gray-400 hover:text-gray-500'><SquarePen width='1rem' height='1rem' strokeWidth='1.65' /></button>
-									<button className='text-gray-400 hover:text-gray-500'><Trash2 width='1rem' height='1rem' strokeWidth='1.65' /></button>
+									<button aria-label={`Edit ${budget.category.name} Budget`} className='-mb-px text-gray-400 hover:text-gray-500'><SquarePen width='1rem' height='1rem' strokeWidth='1.65' /></button>
+									<button onClick={() => setBudgetToDelete(budget)} aria-label={`Delete ${budget.category.name} Budget`} className='text-gray-400 hover:text-gray-500'><Trash2 width='1rem' height='1rem' strokeWidth='1.65' /></button>
 								</td>
 							</tr>
-						)) : (
-							<div>Empty</div>
-						)}
+						))}
 					</tbody>
 				</table>
 			</div>
+
+			<NewBudgetModal
+				isOpen={newBudgetModalOpen}
+				onConfirm={async (data: CreateBudgetInput) => {
+					const res = await budgetsApi.create(data);
+					setBudgets(prev => [...prev, res.data]);
+					setNewBudgetModalOpen(false);
+				}}
+				onClose={() => { setNewBudgetModalOpen(false); }}
+			/>
 			
-			{/* Renders child routes (e.g. /transactions/new) as an overlay */}
-			<Outlet />
+			<ConfirmDialog
+				isOpen={Boolean(budgetToDelete)}
+				title='Delete Budget'
+				description={
+					<>
+						Are you sure you want to delete{' '}
+						<span className='font-bold text-gray-800'>{budgetToDelete?.category.name} Budget</span>
+						?
+					</>
+				}
+				errorMessage={deleteErrorMessage}
+				confirmText='Delete'
+				isDanger={true}
+				isLoading={isDeleting}
+				onConfirm={handleDeleteConfirm}
+				onClose={() => { setDeleteErrorMessage(undefined); setBudgetToDelete(null); }}
+			/>
 		</DashboardLayout>
 	);
 }
